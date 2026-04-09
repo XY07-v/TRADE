@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Listado de Puntos</h3>
+<div class="card">
+    <input type="text" id="q" placeholder="BMB o Nombre...">
+    <button class="btn-blue" onclick="buscar()">Buscar</button>
+</div>
+<div id="res"></div>
+<script>
+    async function buscar() {
+        const r = await fetch(`/api/buscar?q=${document.getElementById('q').value}`);
+        const data = await r.json();
+        const div = document.getElementById('res'); div.innerHTML = "";
+        data.forEach(p => {
+            div.innerHTML += `<div class="card"><b>${p.BMB}</b> - ${p['Nombre de punto']}</div>`;
+        });
+    }
+</script>
+{% endblock %}
