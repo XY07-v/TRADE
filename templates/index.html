@@ -2,119 +2,139 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creación de Punto</title>
     <style>
         :root { --ios-bg: #F2F2F7; --ios-blue: #007AFF; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--ios-bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        h2 { text-align: center; margin-bottom: 25px; font-weight: 600; }
-        .field { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 6px; font-size: 14px; color: #1c1c1e; font-weight: 500; }
-        input, select { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--ios-bg); font-size: 16px; box-sizing: border-box; outline: none; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--ios-bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h2 { text-align: center; font-weight: 600; margin-bottom: 20px; }
+        .group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #1c1c1e; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--ios-bg); font-size: 16px; box-sizing: border-box; }
         input:disabled { color: #8e8e93; }
-        button { width: 100%; padding: 15px; background: var(--ios-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        button { width: 100%; padding: 16px; background: var(--ios-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-top: 10px; cursor: pointer; }
         #status { text-align: center; font-size: 12px; color: var(--ios-blue); margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="card">
     <h2>Creación de Punto</h2>
-    
-    <div class="field">
-        <label>Dirección</label>
-        <input type="text" id="direccion" placeholder="Obteniendo calle...">
-    </div>
+    <form id="dinamicoForm">
+        {% for col in columnas %}
+            <div class="group">
+                <label>{{ col }}</label>
+                
+                {% if col == "Id" %}
+                    <input type="text" id="{{ col }}" value="{{ next_id }}" disabled>
+                
+                {% elif col == "Direccion" %}
+                    <input type="text" id="{{ col }}" placeholder="Cargando calle...">
 
-    <div class="field">
-        <label>Ubicación</label>
-        <input type="text" id="ubicacion" placeholder="Capturando coordenadas..." readonly>
-    </div>
+                {% elif col == "Ubicacion" %}
+                    <input type="text" id="{{ col }}" placeholder="Coordenadas..." readonly>
 
-    <div class="field">
-        <label>Ciudad</label>
-        <select id="ciudad" onchange="setDepto()">
-            <option value="Bogotá">Bogotá</option>
-            <option value="Medellín">Medellín</option>
-            <option value="Cali">Cali</option>
-            <option value="Barranquilla">Barranquilla</option>
-        </select>
-    </div>
+                {% elif col == "Ciudad" %}
+                    <select id="{{ col }}" onchange="updateDepto()">
+                        <option value="Bogotá">Bogotá</option>
+                        <option value="Medellín">Medellín</option>
+                        <option value="Cali">Cali</option>
+                        <option value="Barranquilla">Barranquilla</option>
+                    </select>
 
-    <div class="field">
-        <label>Departamento</label>
-        <input type="text" id="departamento" value="Cundinamarca" disabled>
-    </div>
+                {% elif col == "Departamento" %}
+                    <input type="text" id="{{ col }}" value="Cundinamarca" disabled>
 
-    <div class="field">
-        <label>Desarrollador</label>
-        <select id="desarrollador">
-            <option value="Andrés Vanegas">Andrés Vanegas</option>
-            <option value="Admin">Admin</option>
-        </select>
-    </div>
+                {% elif col == "Desarrollador" %}
+                    <select id="{{ col }}">
+                        <option value="Andrés Vanegas">Andrés Vanegas</option>
+                        <option value="Admin">Admin</option>
+                    </select>
 
-    <button onclick="save()">Guardar Registro</button>
-    <p id="status">Iniciando GPS...</p>
+                {% elif col == "Estado" %}
+                    <select id="{{ col }}">
+                        <option value="Habilitado">Habilitado</option>
+                        <option value="Deshabilitado">Deshabilitado</option>
+                    </select>
+
+                {% elif col == "MES" %}
+                    <input type="text" id="{{ col }}" value="{{ now }}" class="mes-auto">
+
+                {% elif col == "Rango" %}
+                    <input type="text" id="{{ col }}" value="200" disabled>
+
+                {% else %}
+                    <input type="text" id="{{ col }}" placeholder="Ingrese {{ col }}">
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="button" onclick="save()">Guardar Punto</button>
+        <p id="status">Obteniendo ubicación...</p>
+    </form>
 </div>
 
 <script>
-    const deptoMap = { "Bogotá": "Cundinamarca", "Medellín": "Antioquia", "Cali": "Valle del Cauca", "Barranquilla": "Atlántico" };
+    const deptos = { "Bogotá": "Cundinamarca", "Medellín": "Antioquia", "Cali": "Valle del Cauca", "Barranquilla": "Atlántico" };
 
-    function setDepto() {
-        document.getElementById('departamento').value = deptoMap[document.getElementById('ciudad').value];
+    function updateDepto() {
+        const c = document.getElementById('Ciudad').value;
+        if(document.getElementById('Departamento')) document.getElementById('Departamento').value = deptos[c];
     }
 
-    // CAPTURA GPS DIRECTA DEL NAVEGADOR (SOPORTE TOTAL MÓVIL)
-    function getGPS() {
+    // GPS NATIVO
+    function initGPS() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (p) => {
                 const lat = p.coords.latitude;
                 const lon = p.coords.longitude;
-                document.getElementById('ubicacion').value = `${lat}, ${lon}`;
-                document.getElementById('status').innerText = "📍 GPS Activo";
+                if(document.getElementById('Ubicacion')) document.getElementById('Ubicacion').value = `${lat}, ${lon}`;
+                document.getElementById('status').innerText = "📍 GPS Conectado";
 
-                // Convertir coordenadas a nombre de calle
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                    const d = await res.json();
-                    const road = d.address.road || d.address.pedestrian || "Calle s/n";
-                    const house = d.address.house_number || "";
-                    document.getElementById('direccion').value = `${road} ${house ? '# ' + house : ''}`;
-                } catch (e) {
-                    document.getElementById('direccion').value = "Dirección no detectada";
-                }
-            }, (e) => {
-                document.getElementById('status').innerText = "❌ Error: Activa el GPS";
+                // Geocodificación para Dirección
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const d = await res.json();
+                const street = d.address.road || d.address.pedestrian || "Calle s/n";
+                const house = d.address.house_number || "";
+                if(document.getElementById('Direccion')) document.getElementById('Direccion').value = `${street} ${house ? '# ' + house : ''}`;
+            }, () => {
+                document.getElementById('status').innerText = "❌ Error GPS";
             }, { enableHighAccuracy: true });
         }
     }
 
     async function save() {
-        const body = {
-            Id: "{{ next_id }}",
-            Direccion: document.getElementById('direccion').value,
-            Ubicacion: document.getElementById('ubicacion').value,
-            Ciudad: document.getElementById('ciudad').value,
-            Departamento: document.getElementById('departamento').value,
-            Desarrollador: document.getElementById('desarrollador').value,
-            Estado: "Habilitado",
-            MES: new Date().toLocaleString('es-ES', { month: 'long' }).toUpperCase()
-        };
-
-        const r = await fetch('/guardar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
+        const data = {};
+        // Recoger todos los IDs que coincidan con las columnas enviadas
+        const cols = {{ columnas|tojson }};
+        cols.forEach(c => {
+            const el = document.getElementById(c);
+            if(el) data[c] = el.value;
         });
 
-        const res = await r.json();
-        alert(res.message);
-        if(res.status === "success") location.reload();
+        // Mes automático si existe
+        if(data['MES'] === "") {
+            data['MES'] = new Date().toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+        }
+
+        const resp = await fetch('/guardar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        const resJson = await resp.json();
+        alert(resJson.message);
+        if(resJson.status === 'success') location.reload();
     }
 
-    window.onload = getGPS;
+    window.onload = () => {
+        initGPS();
+        // Setear mes por defecto
+        const mesCampos = document.querySelectorAll('.mes-auto');
+        mesCampos.forEach(i => i.value = new Date().toLocaleString('es-ES', { month: 'long' }).toUpperCase());
+    };
 </script>
 </body>
 </html>
