@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Creación de Punto</title>
+    <style>
+        :root { --ios-bg: #F2F2F7; --ios-blue: #007AFF; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--ios-bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h2 { text-align: center; margin-bottom: 25px; font-weight: 600; }
+        .field { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-size: 14px; color: #1c1c1e; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--ios-bg); font-size: 16px; box-sizing: border-box; outline: none; }
+        input:disabled { color: #8e8e93; }
+        button { width: 100%; padding: 15px; background: var(--ios-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        #status { text-align: center; font-size: 12px; color: var(--ios-blue); margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Creación de Punto</h2>
+    
+    <div class="field">
+        <label>Dirección</label>
+        <input type="text" id="direccion" placeholder="Obteniendo calle...">
+    </div>
+
+    <div class="field">
+        <label>Ubicación</label>
+        <input type="text" id="ubicacion" placeholder="Capturando coordenadas..." readonly>
+    </div>
+
+    <div class="field">
+        <label>Ciudad</label>
+        <select id="ciudad" onchange="setDepto()">
+            <option value="Bogotá">Bogotá</option>
+            <option value="Medellín">Medellín</option>
+            <option value="Cali">Cali</option>
+            <option value="Barranquilla">Barranquilla</option>
+        </select>
+    </div>
+
+    <div class="field">
+        <label>Departamento</label>
+        <input type="text" id="departamento" value="Cundinamarca" disabled>
+    </div>
+
+    <div class="field">
+        <label>Desarrollador</label>
+        <select id="desarrollador">
+            <option value="Andrés Vanegas">Andrés Vanegas</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
+
+    <button onclick="save()">Guardar Registro</button>
+    <p id="status">Iniciando GPS...</p>
+</div>
+
+<script>
+    const deptoMap = { "Bogotá": "Cundinamarca", "Medellín": "Antioquia", "Cali": "Valle del Cauca", "Barranquilla": "Atlántico" };
+
+    function setDepto() {
+        document.getElementById('departamento').value = deptoMap[document.getElementById('ciudad').value];
+    }
+
+    // CAPTURA GPS DIRECTA DEL NAVEGADOR (SOPORTE TOTAL MÓVIL)
+    function getGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (p) => {
+                const lat = p.coords.latitude;
+                const lon = p.coords.longitude;
+                document.getElementById('ubicacion').value = `${lat}, ${lon}`;
+                document.getElementById('status').innerText = "📍 GPS Activo";
+
+                // Convertir coordenadas a nombre de calle
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const d = await res.json();
+                    const road = d.address.road || d.address.pedestrian || "Calle s/n";
+                    const house = d.address.house_number || "";
+                    document.getElementById('direccion').value = `${road} ${house ? '# ' + house : ''}`;
+                } catch (e) {
+                    document.getElementById('direccion').value = "Dirección no detectada";
+                }
+            }, (e) => {
+                document.getElementById('status').innerText = "❌ Error: Activa el GPS";
+            }, { enableHighAccuracy: true });
+        }
+    }
+
+    async function save() {
+        const body = {
+            Id: "{{ next_id }}",
+            Direccion: document.getElementById('direccion').value,
+            Ubicacion: document.getElementById('ubicacion').value,
+            Ciudad: document.getElementById('ciudad').value,
+            Departamento: document.getElementById('departamento').value,
+            Desarrollador: document.getElementById('desarrollador').value,
+            Estado: "Habilitado",
+            MES: new Date().toLocaleString('es-ES', { month: 'long' }).toUpperCase()
+        };
+
+        const r = await fetch('/guardar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+
+        const res = await r.json();
+        alert(res.message);
+        if(res.status === "success") location.reload();
+    }
+
+    window.onload = getGPS;
+</script>
+</body>
+</html>
