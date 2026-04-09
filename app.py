@@ -1,10 +1,12 @@
 import os, math
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import pandas as pd # Para el reporte Excel
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from pymongo import MongoClient
 from datetime import datetime
+from io import BytesIO
 
 app = Flask(__name__)
-app.secret_key = "power_trade_final_2026"
+app.secret_key = "power_trade_pro_2026"
 
 # CONEXIÓN MONGODB
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
@@ -13,7 +15,6 @@ db = client['POWER_TRADE']
 puntos_col = db['Puntos de Venta']
 visitas_col = db['Visitas']
 
-# USUARIOS (Cédula: Nombre)
 USUARIOS = {"12345678": "Andrés Vanegas", "87654321": "Admin Power"}
 
 def calcular_distancia(c1, c2):
@@ -32,56 +33,73 @@ def home():
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('app.html', usuario=session['usuario'])
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        cc = request.form.get('cc')
-        if cc in USUARIOS:
-            session['usuario'] = USUARIOS[cc]
-            return redirect(url_for('home'))
-        return render_template('login.html', error="Cédula incorrecta")
-    return render_template('login.html')
+# --- APIs DE BÚSQUEDA OPTIMIZADA ---
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-# --- APIs ---
-
-@app.route('/api/puntos', methods=['GET'])
-def get_puntos():
-    return jsonify(list(puntos_col.find({}, {"_id":0}).sort("Id", -1)))
+@app.route('/api/buscar_puntos', methods=['GET'])
+def buscar_puntos():
+    q = request.args.get('q', '').strip()
+    if not q: return jsonify([])
+    
+    # Búsqueda por palabra clave en BMB (como texto) o Nombre de punto (regex no exacta)
+    query = {
+        "$or": [
+            {"Nombre de punto": {"$regex": q, "$options": "i"}},
+            {"BMB": {"$regex": q, "$options": "i"}}
+        ]
+    }
+    # Limitamos a 50 resultados para no saturar el móvil
+    resultados = list(puntos_col.find(query, {"_id":0}).limit(50))
+    return jsonify(resultados)
 
 @app.route('/api/guardar_punto', methods=['POST'])
 def guardar_punto():
-    try:
-        data = request.json
-        # Validar duplicados
-        if puntos_col.find_one({"BMB": data['BMB']}): return jsonify({"status":"err", "msg":"BMB ya existe"}), 400
-        if puntos_col.find_one({"Nombre de punto": data['Nombre de punto']}): return jsonify({"status":"err", "msg":"Nombre ya existe"}), 400
-        
-        # Obtener siguiente ID
-        ultimo = puntos_col.find_one(sort=[("Id", -1)])
-        data['Id'] = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
-        
-        puntos_col.insert_one(data)
-        return jsonify({"status":"ok"})
-    except Exception as e:
-        return jsonify({"status":"err", "msg": str(e)}), 500
+    data = request.json
+    # Estandarizar fecha
+    data['Fecha_Creacion'] = datetime.now().strftime("%Y-%m-%d")
+    ultimo = puntos_col.find_one(sort=[("Id", -1)])
+    data['Id'] = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
+    puntos_col.insert_one(data)
+    return jsonify({"status":"ok"})
 
 @app.route('/api/guardar_visita', methods=['POST'])
 def guardar_visita():
     data = request.json
     dist = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
     data['distancia_real'] = dist
-    data['fecha'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data['fecha'] = datetime.now().strftime("%Y-%m-%d") # Solo fecha
     visitas_col.insert_one(data)
     return jsonify({"status":"ok", "distancia": dist})
 
-@app.route('/api/historial')
-def get_historial():
-    return jsonify(list(visitas_col.find({}, {"_id":0}).sort("fecha", -1)))
+# --- REPORTE EXCEL FILTRADO ---
+
+@app.route('/api/descargar_reporte')
+def descargar_reporte():
+    f_inicio = request.args.get('inicio')
+    f_fin = request.args.get('fin')
+    
+    query = {"fecha": {"$gte": f_inicio, "$lte": f_fin}}
+    datos = list(visitas_col.find(query, {"_id":0}))
+    
+    if not datos: return "No hay datos en este rango", 404
+    
+    df = pd.DataFrame(datos)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Visitas')
+    output.seek(0)
+    
+    return send_file(output, attachment_filename=f"Reporte_{f_inicio}_al_{f_fin}.xlsx", as_attachment=True)
+
+# (Mantener login y logout igual)
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        cc = request.form.get('cc'); session['usuario'] = USUARIOS.get(cc)
+        if session['usuario']: return redirect(url_for('home'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout(): session.clear(); return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
