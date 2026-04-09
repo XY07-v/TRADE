@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Historial de Visitas</h3>
+<div class="card">
+    <input type="date" id="ini"> <input type="date" id="fin">
+    <button class="btn-blue" style="background:var(--green);" onclick="descargar()">Excel</button>
+</div>
+{% for v in datos %}
+<div class="card" style="border-left:5px solid {{ 'var(--red)' if v.distancia_real > 200 else 'var(--green)' }}">
+    <b>{{ v['Nombre de punto'] }}</b><br>
+    <small>{{ v.fecha }} | {{ v.distancia_real }}m</small>
+</div>
+{% endfor %}
+<script>
+    function descargar() {
+        const i = document.getElementById('ini').value;
+        const f = document.getElementById('fin').value;
+        if(i && f) window.location.href = `/descargar?ini=${i}&fin=${f}`;
+    }
+</script>
+{% endblock %}
