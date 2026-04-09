@@ -94,9 +94,10 @@ HTML_TEMPLATE = """
             <div>
                 <label class="block text-xs font-bold text-gray-600 uppercase">Motivo</label>
                 <select name="motivo" class="w-full p-2 border rounded-lg" required>
-                    <option value="Visita Rutina">Visita Rutina</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                    <option value="Emergencia">Emergencia</option>
+                    <option value="Ruta">Ruta</option>
+                    <option value="Maquina Retirada">Maquina Retirada</option>
+                    <option value="Poc Cerrado">Poc Cerrado</option>
+                    <option value="Novedad">Novedad</option>
                 </select>
             </div>
 
