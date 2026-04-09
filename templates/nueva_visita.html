@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Registrar Visita</h3>
+<div class="card">
+    <input type="text" id="q" placeholder="Buscar...">
+    <button class="btn-blue" onclick="buscar()">Consultar</button>
+</div>
+<div id="res"></div>
+<div id="form_v" style="display:none;" class="card">
+    <h4 id="v_tit"></h4>
+    <textarea id="obs" placeholder="Observaciones"></textarea>
+    <button class="btn-blue" onclick="enviar()">Guardar</button>
+</div>
+<script>
+    let miGPS = "", pSel = null;
+    navigator.geolocation.getCurrentPosition(p => miGPS = `${p.coords.latitude},${p.coords.longitude}`);
+    async function buscar() {
+        const r = await fetch(`/api/buscar?q=${document.getElementById('q').value}`);
+        const data = await r.json();
+        const div = document.getElementById('res'); div.innerHTML = "";
+        data.forEach(p => {
+            let d = document.createElement('div'); d.className = "card"; d.innerText = p['Nombre de punto'];
+            d.onclick = () => { pSel = p; document.getElementById('v_tit').innerText = p['Nombre de punto']; document.getElementById('form_v').style.display = "block"; div.innerHTML = ""; };
+            div.appendChild(d);
+        });
+    }
+    async function enviar() {
+        const payload = { "Nombre de punto": pSel['Nombre de punto'], "BMB": pSel.BMB, "observacion": document.getElementById('obs').value, "ubicacion_punto": pSel.Ubicacion, "ubicacion_actual": miGPS };
+        await fetch('/api/guardar_visita', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+        location.href = "/";
+    }
+</script>
+{% endblock %}
