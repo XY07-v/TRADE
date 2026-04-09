@@ -1,27 +1,36 @@
-import os
+import os, math
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from pymongo import MongoClient
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "pt_secret_2026" # Clave para sesiones
+app.secret_key = "pt_gold_2026"
 
-# Conexión a MongoDB
+# Conexión
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
-visitas_col = db['Puntos de Venta']
+puntos_col = db['Puntos de Venta']
+visitas_col = db['Visitas'] # Nueva colección
 
-# Diccionario de Usuarios (Cédula: Nombre)
-USUARIOS = {
-    "12345678": "Andrés Vanegas",
-    "87654321": "Admin Power",
-    "10102020": "Soporte Técnico"
-}
+USUARIOS = {"12345678": "Andrés Vanegas", "87654321": "Admin Power"}
+
+def calcular_distancia(coords1, coords2):
+    # Coords en formato "lat, lon"
+    try:
+        lat1, lon1 = map(float, coords1.split(','))
+        lat2, lon2 = map(float, coords2.split(','))
+        R = 6371000 # Radio Tierra en metros
+        phi1, phi2 = math.radians(lat1), math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+        return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    except: return 0
 
 @app.route('/')
 def root():
-    return redirect(url_for('login')) if 'usuario' not in session else redirect(url_for('index'))
+    return redirect(url_for('login')) if 'usuario' not in session else render_template('app.html', usuario=session['usuario'])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -29,45 +38,34 @@ def login():
         cc = request.form.get('cc')
         if cc in USUARIOS:
             session['usuario'] = USUARIOS[cc]
-            return redirect(url_for('index'))
+            return redirect(url_for('root'))
         return render_template('login.html', error="Cédula no registrada")
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.pop('usuario', None)
+    session.clear()
     return redirect(url_for('login'))
 
-@app.route('/index')
-def index():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    ultimo = visitas_col.find_one(sort=[("Id", -1)])
-    next_id = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
-    # Definición de columnas a mostrar
-    columnas = ["Id", "BMB", "Nombre de punto", "Direccion", "Ubicacion", "Ciudad", "Departamento", "Desarrollador", "Estado", "Rango"]
-    return render_template('index.html', next_id=next_id, columnas=columnas, usuario=session['usuario'])
+# API: Obtener puntos para búsqueda
+@app.route('/api/puntos')
+def get_puntos():
+    puntos = list(puntos_col.find({}, {"_id":0, "Nombre de punto":1, "BMB":1, "Ubicacion":1, "Rango":1}))
+    return jsonify(puntos)
 
-@app.route('/registros')
-def registros():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    datos = list(visitas_col.find().sort("Id", -1))
-    return render_template('registros.html', datos=datos)
+@app.route('/api/guardar_visita', methods=['POST'])
+def guardar_visita():
+    data = request.json
+    # Validación de distancia
+    distancia = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
+    data['diferencia_metros'] = round(distancia, 2)
+    data['fecha'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    visitas_col.insert_one(data)
+    return jsonify({"status": "ok", "distancia": data['diferencia_metros']})
 
-@app.route('/guardar', methods=['POST'])
-def guardar():
-    if 'usuario' not in session: return jsonify({"status": "error"}), 401
-    try:
-        data = request.json
-        # VALIDACIONES
-        if visitas_col.find_one({"BMB": data['BMB']}):
-            return jsonify({"status": "error", "message": f"El BMB {data['BMB']} ya existe"}), 400
-        if visitas_col.find_one({"Nombre de punto": data['Nombre de punto']}):
-            return jsonify({"status": "error", "message": "El Nombre de punto ya existe"}), 400
-        
-        visitas_col.insert_one(data)
-        return jsonify({"status": "success", "message": "Punto guardado con éxito"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/api/historial_visitas')
+def historial():
+    return jsonify(list(visitas_col.find({}, {"_id":0}).sort("fecha", -1)))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
