@@ -1,5 +1,3 @@
-streamlit
+flask
 pymongo
 dnspython
-streamlit-js-eval
-geopy
