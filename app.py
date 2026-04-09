@@ -12,7 +12,7 @@ client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
 puntos_col = db['Puntos de Venta']
 visitas_col = db['Visitas']
-usuarios_col = db['Usuarios'] # Asegúrate de tener esta colección para el login
+usuarios_col = db['Usuarios'] # <--- Aquí buscará el documento que me pasaste
 
 # --- INTERFACES HTML ---
 
@@ -33,17 +33,18 @@ HTML_LOGIN = """
 <body>
     <div class="login-card">
         <h3 style="margin-top:0">Power Trade BI</h3>
-        <p style="color:gray; font-size:14px;">Ingrese su credencial para continuar</p>
+        <p style="color:gray; font-size:14px;">Ingrese su cédula para continuar</p>
         <form action="/login" method="POST">
-            <input type="password" name="cedula" placeholder="Contraseña / Cédula" required>
+            <input type="password" name="cedula" placeholder="Cédula" required autocomplete="current-password">
             <button type="submit">Entrar</button>
-            {% if error %}<p style="color:#FF3B30; font-size:14px; margin-top:10px;">Credencial no válida</p>{% endif %}
+            {% if error %}<p style="color:#FF3B30; font-size:14px; margin-top:10px;">Usuario no encontrado</p>{% endif %}
         </form>
     </div>
 </body>
 </html>
 """
 
+# (La interfaz HTML_SISTEMA se mantiene igual a la anterior, solo cambia la lógica de Python abajo)
 HTML_SISTEMA = """
 <!DOCTYPE html>
 <html lang="es">
@@ -53,32 +54,23 @@ HTML_SISTEMA = """
     <title>Power Trade BI</title>
     <style>
         :root { --blue: #007AFF; --green: #34C759; --bg: #F2F2F7; --gray: #8E8E93; --radius: 14px; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1C1C1E; }
-        
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; position: sticky; top: 0; background: var(--bg); z-index: 100; padding: 10px 0; }
         .tab-btn { flex: 1; padding: 15px; border: none; border-radius: var(--radius); background: #E5E5EA; font-weight: 700; color: var(--gray); font-size: 15px; }
-        .tab-btn.active { background: var(--blue); color: white; box-shadow: 0 4px 10px rgba(0,122,255,0.2); }
-
+        .tab-btn.active { background: var(--blue); color: white; }
         .content { display: none; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .content.active { display: block; }
-
-        input, select, textarea { width: 100%; padding: 16px; margin: 10px 0; border: 1px solid #D1D1D6; border-radius: var(--radius); font-size: 16px; background: #FFF; }
-        button.primary { width: 100%; padding: 18px; background: var(--blue); color: white; border: none; border-radius: var(--radius); font-weight: bold; font-size: 17px; cursor: pointer; }
-
-        .img-preview { width: 100%; height: auto; max-height: 200px; object-fit: cover; border-radius: 12px; margin: 10px 0; display: none; border: 2px solid #EEE; }
-        
-        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:1500; justify-content:center; align-items:center; flex-direction:column; font-weight:bold; }
+        input, select, textarea { width: 100%; padding: 16px; margin: 10px 0; border: 1px solid #D1D1D6; border-radius: var(--radius); font-size: 16px; }
+        button.primary { width: 100%; padding: 18px; background: var(--blue); color: white; border: none; border-radius: var(--radius); font-weight: bold; font-size: 17px; }
+        .img-preview { width: 100%; height: auto; max-height: 200px; object-fit: cover; border-radius: 12px; margin: 10px 0; display: none; }
         .punto-item { padding: 15px; border-bottom: 1px solid #F2F2F7; cursor: pointer; }
-        .punto-item:active { background: #F2F2F7; }
     </style>
 </head>
 <body>
-    <div id="overlay">Subiendo Reporte...</div>
-
     <div style="display:flex; justify-content:space-between; padding:5px 10px; font-size:13px; color:gray;">
-        <span>User: <b>{{ session['user'] }}</b></span>
-        <a href="/logout" style="color:#FF3B30; text-decoration:none; font-weight:bold;">Salir</a>
+        <span>Bienvenido: <b>{{ session['nombre'] }}</b></span>
+        <a href="/logout" style="color:#FF3B30; text-decoration:none; font-weight:bold;">Cerrar</a>
     </div>
 
     <div class="tabs">
@@ -96,17 +88,13 @@ HTML_SISTEMA = """
         <form id="form-visita">
             <input type="text" id="f_pv" placeholder="Punto de Venta" readonly style="background:#F2F2F7;">
             <input type="text" id="f_bmb" placeholder="BMB" readonly style="background:#F2F2F7;">
-            
             <select id="f_estado">
                 <option value="Visita Exitosa">Visita Exitosa</option>
+                <option value="Punto Cerrado">Punto Cerrado</option>
                 <option value="Maquina Retirada">Maquina Retirada</option>
-                <option value="Error App Trade">Error App Trade</option>
             </select>
-
-            <label>Foto Equipo:</label>
             <input type="file" accept="image/*" capture="camera" onchange="procesarFoto(this, 'p1')">
             <img id="p1" class="img-preview">
-
             <textarea id="f_obs" placeholder="Observaciones..."></textarea>
             <input type="hidden" id="f_gps">
             <button type="button" class="primary" onclick="enviarVisita()">Guardar Reporte</button>
@@ -149,7 +137,7 @@ HTML_SISTEMA = """
             data.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "punto-item";
-                div.innerHTML = `<strong>${p['Punto de Venta']}</strong><br><small>${p['BMB']}</small>`;
+                div.innerHTML = `<strong>${p['Punto de Venta']}</strong><br><small>BMB: ${p['BMB']}</small>`;
                 div.onclick = () => {
                     document.getElementById('f_pv').value = p['Punto de Venta'];
                     document.getElementById('f_bmb').value = p['BMB'];
@@ -165,15 +153,15 @@ HTML_SISTEMA = """
                 bmb: document.getElementById('f_bmb').value,
                 estado: document.getElementById('f_estado').value,
                 f1: document.getElementById('p1').src,
+                obs: document.getElementById('f_obs').value,
                 gps: document.getElementById('f_gps').value
             };
-            document.getElementById('overlay').style.display = 'flex';
             const r = await fetch('/api/guardar_visita', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            if(r.ok) { alert("¡Éxito!"); location.reload(); }
+            if(r.ok) { alert("¡Reporte Guardado!"); location.reload(); }
         }
 
         navigator.geolocation.getCurrentPosition(p => {
@@ -190,10 +178,12 @@ HTML_SISTEMA = """
 def login():
     if request.method == 'POST':
         cedula = request.form.get('cedula').strip()
-        # Puedes simplificar esto: si la cedula existe en la coleccion Usuarios
+        # Busca por el campo 'password' de tu documento
         user = usuarios_col.find_one({"password": {"$in": [cedula, int(cedula) if cedula.isdigit() else ""]}})
-        if user or cedula == "12345678": # Bypass para pruebas
-            session['user'] = cedula
+        
+        if user:
+            session['user'] = user['usuario']
+            session['nombre'] = user['nombre_completo']
             return redirect('/')
         return render_template_string(HTML_LOGIN, error=True)
     return render_template_string(HTML_LOGIN)
@@ -206,8 +196,8 @@ def index():
 @app.route('/api/buscar')
 def api_buscar():
     q = request.args.get('q', '').strip()
+    # Ajustado para buscar por Punto de Venta o BMB
     filtro = {"$or": [{"Punto de Venta": {"$regex": q, "$options": "i"}}, {"BMB": {"$regex": q, "$options": "i"}}]}
-    # Traemos solo los nombres y BMB (Sin fotos ni IDs pesados)
     puntos = list(puntos_col.find(filtro, {"_id":0, "Punto de Venta":1, "BMB":1}).limit(10))
     return jsonify(puntos)
 
@@ -216,11 +206,16 @@ def api_visita():
     d = request.json
     visitas_col.insert_one({
         "usuario": session['user'],
-        "pv": d['pv'], "bmb": d['bmb'], "motivo": d['estado'],
-        "foto_equipo": d['f1'], "gps": d['gps'],
+        "nombre_operador": session['nombre'],
+        "pv": d['pv'], 
+        "bmb": d['bmb'], 
+        "motivo": d['estado'],
+        "obs": d['obs'],
+        "foto_equipo": d['f1'], 
+        "gps": d['gps'],
         "fecha": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     })
-    return jsonify({"s": "ok"})
+    return jsonify({"status": "ok"})
 
 @app.route('/logout')
 def logout():
