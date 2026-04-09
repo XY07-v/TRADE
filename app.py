@@ -2,48 +2,37 @@ import streamlit as st
 import os
 from pymongo import MongoClient
 from datetime import datetime
+from streamlit_js_eval import streamlit_js_eval, get_geolocation
 
-# --- CONFIGURACIÓN DE PÁGINA (ESTILO IOS) ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Registro PT", page_icon="📱", layout="centered")
 
-# CSS Personalizado para estética profesional y estrecha
+# Traducción de meses a español
+MESES_ES = {
+    "January": "Enero", "February": "Febrero", "March": "Marzo", 
+    "April": "Abril", "May": "Mayo", "June": "Junio", 
+    "July": "Julio", "August": "Agosto", "September": "Septiembre", 
+    "October": "Octubre", "November": "Noviembre", "December": "Diciembre"
+}
+
+# CSS Estilo iOS con formulario estrecho
 st.markdown("""
     <style>
-    /* Fondo general */
-    .stApp {
-        background-color: #F2F2F7;
-    }
-    /* Contenedor del formulario */
+    .stApp { background-color: #F2F2F7; }
     [data-testid="stForm"] {
         background-color: white;
         padding: 2rem;
         border-radius: 20px;
-        border: none;
         box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.05);
-        max-width: 500px;
+        max-width: 450px;
         margin: auto;
     }
-    /* Botones de radio tipo segmentado */
-    div.row-widget.stRadio > div {
-        background-color: #E9E9EB;
-        padding: 4px;
-        border-radius: 10px;
-        display: flex;
-        justify-content: space-around;
-    }
-    /* Estilo del botón principal */
     .stButton > button {
         width: 100%;
         border-radius: 12px;
         background-color: #007AFF;
         color: white;
-        border: none;
-        font-weight: 500;
-        padding: 0.6rem;
-    }
-    /* Inputs redondeados */
-    input {
-        border-radius: 8px !important;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -54,77 +43,75 @@ client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
 visitas_col = db['Puntos de Venta']
 
-# --- DICCIONARIOS MANUALES (Editable) ---
-# Aquí puedes agregar más ciudades y sus departamentos
+# --- DICCIONARIOS ---
 dict_ubicaciones = {
     "Bogotá": "Cundinamarca",
     "Medellín": "Antioquia",
     "Cali": "Valle del Cauca",
-    "Barranquilla": "Atlántico",
-    "Cartagena": "Bolívar",
-    "Pereira": "Risaralda"
+    "Barranquilla": "Atlántico"
 }
+dict_desarrolladores = ["Andrés Vanegas", "Soporte PT", "Admin"]
 
-# Aquí puedes alimentar la lista de desarrolladores
-dict_desarrolladores = ["Andrés Vanegas", "Laura García", "Carlos Ruiz"]
+# --- LÓGICA DE UBICACIÓN ---
+st.write("🛰️ **Sensor GPS Activo**")
+loc = get_geolocation()
 
-# --- FUNCIONES DE LÓGICA ---
-def obtener_siguiente_id():
-    ultimo_registro = visitas_col.find_one(sort=[("Id", -1)])
-    if ultimo_registro and "Id" in ultimo_registro:
-        return int(ultimo_registro["Id"]) + 1
-    return 1
+coord_display = ""
+if loc:
+    lat = loc['coords']['latitude']
+    lon = loc['coords']['longitude']
+    coord_display = f"{lat}, {lon}"
+else:
+    st.warning("Por favor, permite el acceso a la ubicación en tu teléfono.")
 
-# --- INTERFAZ DEL FORMULARIO ---
+# --- FORMULARIO ---
 st.title("📍 Nuevo Punto")
-st.markdown("##### Complete los detalles del punto de venta")
 
 with st.form("form_ios"):
-    # 1. ID CONSECUTIVO (Automático)
-    proximo_id = obtener_siguiente_id()
-    st.text_input("🆔 ID de Registro", value=proximo_id, disabled=True)
+    # ID Consecutivo
+    ultimo_reg = visitas_col.find_one(sort=[("Id", -1)])
+    proximo_id = (int(ultimo_reg["Id"]) + 1) if ultimo_reg else 1
+    st.text_input("🆔 ID Registro", value=proximo_id, disabled=True)
 
-    # 2. DESARROLLADOR (Diccionario)
-    desarrollador = st.selectbox("👨‍💻 Desarrollador", options=dict_desarrolladores)
-
-    # 3. CIUDAD Y DEPARTAMENTO (Lógica encadenada)
+    # Ciudad y Depto
     ciudad = st.selectbox("🏙️ Ciudad", options=list(dict_ubicaciones.keys()))
-    departamento = st.text_input("🗺️ Departamento", value=dict_ubicaciones[ciudad], disabled=True)
+    st.text_input("🗺️ Departamento", value=dict_ubicaciones[ciudad], disabled=True)
 
-    # 4. DIRECCIÓN Y UBICACIÓN
-    direccion = st.text_input("🏠 Dirección Cercana", placeholder="Ej: Calle 100 #15-20")
-    coordenadas = st.text_input("📍 Ubicación (Coordenadas)", placeholder="Latitud, Longitud")
+    # GPS Automático
+    # Para la "Dirección Cercana", al ser web, usamos el enlace de mapa o el texto de coordenadas
+    direccion_gps = st.text_input("🏠 Dirección Cercana (Auto)", value=f"Cerca de: {coord_display}" if coord_display else "Buscando...", help="Se toma automáticamente del GPS")
+    ubicacion_gps = st.text_input("📍 Ubicación (Coordenadas)", value=coord_display, disabled=True)
 
-    # 5. ESTADO (Botones segmentados)
+    # Desarrollador y Estado
+    desarrollador = st.selectbox("👨‍💻 Desarrollador", options=dict_desarrolladores)
+    
     st.write("🔘 **Estado**")
     estado = st.radio("", ["Habilitado", "Deshabilitado"], horizontal=True, label_visibility="collapsed")
 
-    # 6. MES (Basado en tu regla previa de formato texto)
-    mes_actual = datetime.now().strftime("%B").capitalize()
-    mes = st.text_input("📅 Mes", value=mes_actual)
+    # Mes en Español
+    mes_en_ingles = datetime.now().strftime("%B")
+    mes_espanol = MESES_ES.get(mes_en_ingles, mes_en_ingles)
+    mes = st.text_input("📅 Mes", value=mes_espanol)
 
-    # BOTÓN DE ACCIÓN
     submitted = st.form_submit_button("Guardar Registro")
 
     if submitted:
-        nuevo_punto = {
-            "Id": proximo_id,
-            "Desarrollador": desarrollador,
-            "Ciudad": ciudad,
-            "Departamento": departamento,
-            "Direccion": direccion,
-            "Ubicacion": coordenadas,
-            "Estado": estado,
-            "MES": mes,
-            "Timestamp": datetime.now()
-        }
-        
-        try:
+        if not coord_display:
+            st.error("No se pudo obtener la ubicación. Asegúrate de tener el GPS encendido.")
+        else:
+            nuevo_punto = {
+                "Id": proximo_id,
+                "Desarrollador": desarrollador,
+                "Ciudad": ciudad,
+                "Departamento": dict_ubicaciones[ciudad],
+                "Direccion": direccion_gps,
+                "Ubicacion": ubicacion_gps,
+                "Estado": estado,
+                "MES": mes,
+                "Fecha": datetime.now()
+            }
             visitas_col.insert_one(nuevo_punto)
-            st.success("✅ ¡Punto registrado con éxito!")
+            st.success("✅ ¡Registrado exitosamente!")
             st.balloons()
-        except Exception as e:
-            st.error(f"Error al guardar: {e}")
 
-# Footer minimalista
-st.markdown("<p style='text-align: center; color: #8E8E93; font-size: 0.8rem;'>Power Trade | App Interna 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #8E8E93;'>Power Trade Management</p>", unsafe_allow_html=True)
