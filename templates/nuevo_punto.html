@@ -3,93 +3,98 @@
 <style>
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #444; }
-    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-    input[readonly] { background-color: #f0f0f0; color: #777; cursor: not-allowed; }
-    .gps-status { font-size: 11px; margin-top: 5px; color: #0056b3; font-weight: bold; }
+    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+    .status-gps { padding: 10px; border-radius: 5px; font-size: 12px; margin-top: 5px; font-weight: bold; }
+    .buscando { background: #fff3cd; color: #856404; }
+    .listo { background: #d4edda; color: #155724; }
 </style>
 
-<h3>Registrar Nuevo Punto</h3>
+<h3>🆕 Crear Nuevo Punto</h3>
 
 <div class="card">
     <div class="form-group">
-        <label>Código BMB:</label>
-        <input type="text" id="bmb" placeholder="Ej: 123456">
+        <label>Nombre del Establecimiento:*</label>
+        <input type="text" id="nom" placeholder="Ej: Supermercado El Éxito">
     </div>
 
     <div class="form-group">
-        <label>Nombre del Punto:</label>
-        <input type="text" id="nom" placeholder="Ej: Tienda de la Esquina">
+        <label>Código BMB:*</label>
+        <input type="text" id="bmb" placeholder="Ej: 554422">
     </div>
 
     <div class="form-group">
-        <label>Coordenadas GPS (Automático):</label>
-        <input type="text" id="gps" readonly placeholder="Obteniendo ubicación...">
-        <div id="gps_msg" class="gps-status">⏳ Esperando señal GPS...</div>
+        <label>Ubicación GPS:*</label>
+        <input type="text" id="gps" readonly placeholder="Capturando coordenadas...">
+        <div id="gps_status" class="status-gps buscando">📡 Buscando señal satelital...</div>
     </div>
 
-    <button id="btn_guardar" class="btn-blue" onclick="guardar()" disabled style="background:#ccc;">Esperando GPS...</button>
+    <button id="btn_crear" class="btn-blue" onclick="guardar()" disabled style="background:#888; margin-top:10px;">
+        Esperando GPS...
+    </button>
 </div>
 
 <script>
     let miGPS = "";
 
-    // Solicitar ubicación con alta precisión
+    // Iniciar captura de GPS inmediatamente
     navigator.geolocation.getCurrentPosition(
-        p => { 
-            miGPS = `${p.coords.latitude},${p.coords.longitude}`; 
+        p => {
+            miGPS = `${p.coords.latitude},${p.coords.longitude}`;
             document.getElementById('gps').value = miGPS;
-            document.getElementById('gps_msg').innerText = "✅ Ubicación obtenida correctamente";
-            document.getElementById('gps_msg').style.color = "green";
+            const status = document.getElementById('gps_status');
+            status.innerText = "✅ Ubicación capturada con éxito";
+            status.className = "status-gps listo";
             
-            // Habilitar botón
-            const btn = document.getElementById('btn_guardar');
+            const btn = document.getElementById('btn_crear');
             btn.disabled = false;
             btn.style.background = "#0056b3";
-            btn.innerText = "Crear Punto";
+            btn.innerText = "Registrar Punto de Venta";
         },
         e => {
-            document.getElementById('gps_msg').innerText = "❌ Error: Activa el GPS de tu celular";
-            document.getElementById('gps_msg').style.color = "red";
+            const status = document.getElementById('gps_status');
+            status.innerText = "❌ Error: Activa el GPS y permite el acceso";
+            status.style.background = "#f8d7da";
+            status.style.color = "#721c24";
         },
         { enableHighAccuracy: true }
     );
 
     async function guardar() {
-        const bmb = document.getElementById('bmb').value;
-        const nom = document.getElementById('nom').value;
+        const nom = document.getElementById('nom').value.trim();
+        const bmb = document.getElementById('bmb').value.trim();
 
-        if(!bmb || !nom) {
-            alert("Por favor llena el BMB y el Nombre");
+        if(!nom || !bmb) {
+            alert("Por favor, completa el nombre y el BMB");
             return;
         }
 
-        const btn = document.getElementById('btn_guardar');
+        const btn = document.getElementById('btn_crear');
         btn.innerText = "Guardando...";
         btn.disabled = true;
 
-        const payload = { 
-            "BMB": bmb, 
-            "Nombre de punto": nom, 
-            "Ubicacion": miGPS 
+        const payload = {
+            "Nombre de punto": nom,
+            "BMB": bmb,
+            "Ubicacion": miGPS
         };
 
         try {
-            const r = await fetch('/api/guardar_punto', {
-                method:'POST', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify(payload)
+            const res = await fetch('/api/guardar_punto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
-            if(r.ok) {
-                alert("Punto creado exitosamente");
+            if(res.ok) {
+                alert("✅ Punto registrado correctamente");
                 location.href = "/ver_puntos";
             } else {
-                alert("Error al guardar en el servidor");
+                alert("❌ Error al guardar");
             }
-        } catch(error) {
-            alert("Error de conexión");
+        } catch (err) {
+            alert("❌ Error de conexión");
         } finally {
-            btn.innerText = "Crear Punto";
+            btn.innerText = "Registrar Punto de Venta";
             btn.disabled = false;
         }
     }
