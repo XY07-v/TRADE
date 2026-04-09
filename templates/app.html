@@ -6,86 +6,82 @@
     <title>Power Trade App</title>
     <style>
         :root { --blue: #007AFF; --bg: #F2F2F7; --red: #FF3B30; --green: #34C759; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .view { display: none; padding: 20px; }
         .active { display: block; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 15px; }
+        .card { background: white; border-radius: 15px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
         
         /* Menu Inferior */
-        .tabs { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #CCC; display: flex; height: 60px; }
-        .tab { flex: 1; text-align: center; padding-top: 10px; color: #8E8E93; cursor: pointer; font-size: 12px; }
+        .tabs { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 65px; border-top: 1px solid #ddd; z-index: 100; }
+        .tab { flex: 1; text-align: center; font-size: 10px; color: #8e8e93; padding-top: 12px; }
         .tab.active { color: var(--blue); }
+        .tab-icon { font-size: 20px; display: block; margin-bottom: 2px; }
 
-        /* Form Estilo */
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; background: var(--bg); border-radius: 10px; font-size: 15px; box-sizing: border-box; }
-        input[readonly] { color: #888; }
-        .btn { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
-        
-        /* Historial */
-        .h-card { border-left: 5px solid; }
-        .h-err { border-left-color: var(--red); }
-        .h-ok { border-left-color: var(--green); }
+        .btn { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div style="background: white; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between;">
+<div style="background:white; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee;">
     <b>Power Trade</b>
-    <span style="font-size: 12px;">👤 {{ usuario }} | <a href="/logout" style="color:var(--red); text-decoration:none;">Salir</a></span>
+    <span style="font-size:12px; color:var(--red);" onclick="location.href='/logout'">Cerrar Sesión</span>
 </div>
 
 <div id="v1" class="view active">
-    <h3>Nuevo Punto de Venta</h3>
+    <h3>Nuevo Punto</h3>
     <div class="card">
-        <label>BMB (Número)</label>
-        <input type="number" id="p_bmb">
+        <label>BMB</label>
+        <input type="number" id="p_bmb" placeholder="Ej: 5050">
         <label>Nombre del Punto</label>
-        <input type="text" id="p_nombre">
+        <input type="text" id="p_nombre" placeholder="Ej: Tienda X">
         <label>Ciudad</label>
-        <select id="p_ciudad" onchange="updDepto()"><option value="Bogotá">Bogotá</option><option value="Medellín">Medellín</option><option value="Cali">Cali</option></select>
+        <select id="p_ciudad" onchange="updDepto()">
+            <option value="Bogotá">Bogotá</option>
+            <option value="Medellín">Medellín</option>
+            <option value="Cali">Cali</option>
+        </select>
         <label>Departamento</label>
         <input type="text" id="p_depto" value="Cundinamarca" readonly>
         <label>Dirección (Auto)</label>
         <input type="text" id="p_dir" readonly>
         <label>Coordenadas</label>
         <input type="text" id="p_gps" readonly>
-        <button class="btn" onclick="savePunto()">Registrar Punto</button>
+        <button class="btn" onclick="savePunto()">Guardar Punto</button>
     </div>
 </div>
 
 <div id="v2" class="view">
-    <h3>Nueva Visita</h3>
+    <h3>Visita</h3>
     <div class="card">
         <input type="text" id="search" placeholder="🔍 Buscar BMB o Nombre..." onkeyup="searchP()">
-        <div id="results" style="max-height: 120px; overflow: auto; border-radius: 10px;"></div>
+        <div id="results"></div>
     </div>
-    
     <div id="f_visita" class="card" style="display:none;">
         <h4 id="v_tit"></h4>
-        <input type="hidden" id="v_gps_p">
-        <input type="hidden" id="v_rango_p">
-        
-        <label>Tipo de Visita</label>
         <select id="v_tipo"><option>Fuera de rango</option><option>Error de trade</option></select>
-        <label>Observación</label>
-        <textarea id="v_obs"></textarea>
-        <label>Foto 1 (Obligatoria)</label>
-        <input type="file" id="img1" accept="image/*" capture="camera">
-        <label>Foto 2 (Obligatoria)</label>
-        <input type="file" id="img2" accept="image/*" capture="camera">
-        <button class="btn" onclick="saveVisita()">Enviar Registro</button>
+        <textarea id="v_obs" placeholder="Observaciones..."></textarea>
+        <label>Foto 1</label><input type="file" id="img1" accept="image/*" capture="camera">
+        <label>Foto 2</label><input type="file" id="img2" accept="image/*" capture="camera">
+        <button class="btn" onclick="saveVisita()">Enviar Visita</button>
     </div>
 </div>
 
 <div id="v3" class="view">
-    <h3>Historial de Visitas</h3>
+    <h3>Puntos Registrados</h3>
+    <div id="list_puntos"></div>
+</div>
+
+<div id="v4" class="view">
+    <h3>Historial Visitas</h3>
     <div id="hist"></div>
 </div>
 
 <div class="tabs">
-    <div class="tab active" onclick="nav(1, this)">🏠 Puntos</div>
-    <div class="tab" onclick="nav(2, this)">📝 Visitas</div>
-    <div class="tab" onclick="nav(3, this)">📊 Reporte</div>
+    <div class="tab active" onclick="nav(1, this)"><span class="tab-icon">➕</span>Nuevo</div>
+    <div class="tab" onclick="nav(2, this)"><span class="tab-icon">📝</span>Visita</div>
+    <div class="tab" onclick="nav(3, this)"><span class="tab-icon">🏢</span>Puntos</div>
+    <div class="tab" onclick="nav(4, this)"><span class="tab-icon">📊</span>Reporte</div>
 </div>
 
 <script>
@@ -97,40 +93,70 @@
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById('v'+id).classList.add('active');
         el.classList.add('active');
-        if(id === 2) loadPuntos();
-        if(id === 3) loadHist();
+        if(id === 2 || id === 3) loadPuntos();
+        if(id === 4) loadHist();
     }
 
-    // GPS & DIRECCIÓN
+    function updDepto() {
+        const d = {"Bogotá":"Cundinamarca","Medellín":"Antioquia","Cali":"Valle del Cauca"};
+        document.getElementById('p_depto').value = d[document.getElementById('p_ciudad').value];
+    }
+
     function getLoc() {
         navigator.geolocation.getCurrentPosition(async p => {
             miGPS = `${p.coords.latitude}, ${p.coords.longitude}`;
             if(document.getElementById('p_gps')) document.getElementById('p_gps').value = miGPS;
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.coords.latitude}&lon=${p.coords.longitude}`);
             const d = await res.json();
-            if(document.getElementById('p_dir')) document.getElementById('p_dir').value = d.display_name.split(',')[0] + " " + (d.address.house_number || "");
+            if(document.getElementById('p_dir')) document.getElementById('p_dir').value = d.display_name.split(',')[0];
         }, null, {enableHighAccuracy: true});
+    }
+
+    async function savePunto() {
+        const payload = {
+            "BMB": document.getElementById('p_bmb').value,
+            "Nombre de punto": document.getElementById('p_nombre').value,
+            "Ciudad": document.getElementById('p_ciudad').value,
+            "Departamento": document.getElementById('p_depto').value,
+            "Direccion": document.getElementById('p_dir').value,
+            "Ubicacion": document.getElementById('p_gps').value,
+            "Rango": 200,
+            "Estado": "Habilitado",
+            "Desarrollador": "{{ usuario }}"
+        };
+
+        const r = await fetch('/api/guardar_punto', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const res = await r.json();
+        if(r.ok) { alert("✅ Punto Creado"); location.reload(); } else { alert("❌ Error: " + res.msg); }
     }
 
     async function loadPuntos() {
         const r = await fetch('/api/puntos');
         dataPuntos = await r.json();
+        const div = document.getElementById('list_puntos');
+        div.innerHTML = "";
+        dataPuntos.forEach(p => {
+            div.innerHTML += `<div class="card"><b>${p['Nombre de punto']}</b><br><small>BMB: ${p.BMB} | ${p.Ciudad}</small></div>`;
+        });
     }
 
     function searchP() {
         const q = document.getElementById('search').value.toLowerCase();
         const res = document.getElementById('results');
         res.innerHTML = "";
-        if(!q) return;
         dataPuntos.filter(p => p.BMB.toString().includes(q) || p['Nombre de punto'].toLowerCase().includes(q)).forEach(p => {
             let d = document.createElement('div');
-            d.style = "padding:10px; background:#fff; border-bottom:1px solid #eee;";
+            d.style = "padding:10px; border-bottom:1px solid #eee;";
             d.innerText = `[${p.BMB}] ${p['Nombre de punto']}`;
             d.onclick = () => {
                 document.getElementById('f_visita').style.display = "block";
                 document.getElementById('v_tit').innerText = p['Nombre de punto'];
-                document.getElementById('v_gps_p').value = p.Ubicacion;
-                document.getElementById('v_rango_p').value = p.Rango;
+                document.getElementById('v_tit').dataset.gps = p.Ubicacion;
+                document.getElementById('v_tit').dataset.bmb = p.BMB;
                 res.innerHTML = "";
             };
             res.appendChild(d);
@@ -138,24 +164,21 @@
     }
 
     async function saveVisita() {
-        if(!document.getElementById('img1').files[0] || !document.getElementById('img2').files[0]) return alert("Faltan fotos");
-        
         const payload = {
             "Nombre de punto": document.getElementById('v_tit').innerText,
-            "BMB": dataPuntos.find(p => p['Nombre de punto'] === document.getElementById('v_tit').innerText).BMB,
+            "BMB": document.getElementById('v_tit').dataset.bmb,
             "tipo": document.getElementById('v_tipo').value,
             "observacion": document.getElementById('v_obs').value,
-            "ubicacion_punto": document.getElementById('v_gps_p').value,
+            "ubicacion_punto": document.getElementById('v_tit').dataset.gps,
             "ubicacion_actual": miGPS,
-            "rango_max": parseInt(document.getElementById('v_rango_p').value),
+            "rango_max": 200,
             "usuario": "{{ usuario }}"
         };
-
         const r = await fetch('/api/guardar_visita', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
         const res = await r.json();
-        if(res.distancia > payload.rango_max) alert(`⚠️ FUERA DE RANGO: ${res.distancia}m de diferencia`);
-        alert("✅ Guardado OK");
-        nav(3, document.querySelectorAll('.tab')[2]);
+        if(res.distancia > 200) alert("⚠️ Fuera de Rango: " + res.distancia + "m");
+        alert("✅ Visita Guardada");
+        nav(4, document.querySelectorAll('.tab')[3]);
     }
 
     async function loadHist() {
@@ -164,8 +187,8 @@
         const div = document.getElementById('hist');
         div.innerHTML = "";
         h.forEach(v => {
-            const cls = v.distancia_real > v.rango_max ? 'h-err' : 'h-ok';
-            div.innerHTML += `<div class="card h-card ${cls}"><b>${v['Nombre de punto']}</b><br><small>${v.tipo} | Dist: ${v.distancia_real}m</small><br><p>${v.observacion}</p></div>`;
+            const color = v.distancia_real > 200 ? 'border-left:5px solid var(--red)' : 'border-left:5px solid var(--green)';
+            div.innerHTML += `<div class="card" style="${color}"><b>${v['Nombre de punto']}</b><br><small>${v.tipo} - ${v.distancia_real}m</small></div>`;
         });
     }
 
