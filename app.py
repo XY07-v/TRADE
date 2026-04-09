@@ -1,9 +1,10 @@
 import os
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from pymongo import MongoClient
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "power_trade_secret_key" # Cambia esto por algo seguro
+app.secret_key = "pt_secret_2026" # Clave para sesiones
 
 # Conexión a MongoDB
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
@@ -11,7 +12,7 @@ client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
 visitas_col = db['Puntos de Venta']
 
-# DICCIONARIO DE USUARIOS (Cédula: Nombre)
+# Diccionario de Usuarios (Cédula: Nombre)
 USUARIOS = {
     "12345678": "Andrés Vanegas",
     "87654321": "Admin Power",
@@ -20,9 +21,7 @@ USUARIOS = {
 
 @app.route('/')
 def root():
-    if 'usuario' in session:
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+    return redirect(url_for('login')) if 'usuario' not in session else redirect(url_for('index'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -41,35 +40,32 @@ def logout():
 
 @app.route('/index')
 def index():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
+    if 'usuario' not in session: return redirect(url_for('login'))
     ultimo = visitas_col.find_one(sort=[("Id", -1)])
     next_id = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
-    
-    # Columnas base a mostrar
+    # Definición de columnas a mostrar
     columnas = ["Id", "BMB", "Nombre de punto", "Direccion", "Ubicacion", "Ciudad", "Departamento", "Desarrollador", "Estado", "Rango"]
-    
     return render_template('index.html', next_id=next_id, columnas=columnas, usuario=session['usuario'])
+
+@app.route('/registros')
+def registros():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    datos = list(visitas_col.find().sort("Id", -1))
+    return render_template('registros.html', datos=datos)
 
 @app.route('/guardar', methods=['POST'])
 def guardar():
-    if 'usuario' not in session:
-        return jsonify({"status": "error", "message": "Sesión expirada"}), 401
-        
+    if 'usuario' not in session: return jsonify({"status": "error"}), 401
     try:
         data = request.json
-        
-        # VALIDACIÓN: ¿Existe BMB?
+        # VALIDACIONES
         if visitas_col.find_one({"BMB": data['BMB']}):
             return jsonify({"status": "error", "message": f"El BMB {data['BMB']} ya existe"}), 400
-            
-        # VALIDACIÓN: ¿Existe Nombre de Punto?
         if visitas_col.find_one({"Nombre de punto": data['Nombre de punto']}):
-            return jsonify({"status": "error", "message": f"El punto '{data['Nombre de punto']}' ya existe"}), 400
+            return jsonify({"status": "error", "message": "El Nombre de punto ya existe"}), 400
         
         visitas_col.insert_one(data)
-        return jsonify({"status": "success", "message": "Punto registrado con éxito"})
+        return jsonify({"status": "success", "message": "Punto guardado con éxito"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
