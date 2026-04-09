@@ -1,33 +1,108 @@
 {% extends "layout.html" %}
 {% block content %}
 <h3>Registrar Visita</h3>
+
 <div class="card">
-    <input type="text" id="q" placeholder="Buscar...">
+    <input type="text" id="q" placeholder="Buscar por nombre o BMB...">
     <button class="btn-blue" onclick="buscar()">Consultar</button>
 </div>
+
 <div id="res"></div>
+
 <div id="form_v" style="display:none;" class="card">
-    <h4 id="v_tit"></h4>
-    <textarea id="obs" placeholder="Observaciones"></textarea>
-    <button class="btn-blue" onclick="enviar()">Guardar</button>
+    <h4 id="v_tit" style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px;"></h4>
+    
+    <div id="campos_dinamicos" style="margin-bottom: 15px; font-size: 0.9em;"></div>
+
+    <label><b>Observaciones de la visita:</b></label>
+    <textarea id="obs" placeholder="Escriba aquí las novedades..."></textarea>
+    
+    <button class="btn-blue" style="width: 100%; margin-top: 10px;" onclick="enviar()">Guardar Visita</button>
 </div>
+
 <script>
     let miGPS = "", pSel = null;
-    navigator.geolocation.getCurrentPosition(p => miGPS = `${p.coords.latitude},${p.coords.longitude}`);
+
+    // Obtener ubicación al cargar
+    navigator.geolocation.getCurrentPosition(
+        p => miGPS = `${p.coords.latitude},${p.coords.longitude}`,
+        e => console.error("Error de GPS:", e)
+    );
+
     async function buscar() {
-        const r = await fetch(`/api/buscar?q=${document.getElementById('q').value}`);
+        const query = document.getElementById('q').value;
+        if(!query) return;
+
+        const r = await fetch(`/api/buscar?q=${query}`);
         const data = await r.json();
-        const div = document.getElementById('res'); div.innerHTML = "";
+        
+        const div = document.getElementById('res'); 
+        div.innerHTML = "";
+        
         data.forEach(p => {
-            let d = document.createElement('div'); d.className = "card"; d.innerText = p['Nombre de punto'];
-            d.onclick = () => { pSel = p; document.getElementById('v_tit').innerText = p['Nombre de punto']; document.getElementById('form_v').style.display = "block"; div.innerHTML = ""; };
+            let d = document.createElement('div'); 
+            d.className = "card"; 
+            d.style.cursor = "pointer";
+            d.innerText = `${p['Nombre de punto']} (${p['BMB'] || 'Sin BMB'})`;
+            
+            d.onclick = () => { 
+                pSel = p; 
+                mostrarFormulario(p);
+                div.innerHTML = ""; 
+            };
             div.appendChild(d);
         });
     }
+
+    function mostrarFormulario(p) {
+        document.getElementById('v_tit').innerText = p['Nombre de punto'];
+        const contenedor = document.getElementById('campos_dinamicos');
+        contenedor.innerHTML = ""; // Limpiar previos
+
+        // Iterar sobre todos los campos del objeto proveniente de MongoDB
+        // Excluimos campos técnicos o que ya manejamos
+        const excluidos = ['_id', 'Ubicacion', 'Nombre de punto'];
+
+        Object.keys(p).forEach(key => {
+            if (!excluidos.includes(key)) {
+                let p_info = document.createElement('p');
+                p_info.innerHTML = `<strong>${key}:</strong> ${p[key]}`;
+                p_info.style.margin = "5px 0";
+                contenedor.appendChild(p_info);
+            }
+        });
+
+        document.getElementById('form_v').style.display = "block";
+    }
+
     async function enviar() {
-        const payload = { "Nombre de punto": pSel['Nombre de punto'], "BMB": pSel.BMB, "observacion": document.getElementById('obs').value, "ubicacion_punto": pSel.Ubicacion, "ubicacion_actual": miGPS };
-        await fetch('/api/guardar_visita', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-        location.href = "/";
+        if(!pSel) return;
+
+        const payload = { 
+            "Nombre de punto": pSel['Nombre de punto'], 
+            "BMB": pSel.BMB, 
+            "observacion": document.getElementById('obs').value, 
+            "ubicacion_punto": pSel.Ubicacion, 
+            "ubicacion_actual": miGPS,
+            "detalles_punto": pSel // Enviamos todo el objeto por si quieres guardar una foto del estado en ese momento
+        };
+
+        const res = await fetch('/api/guardar_visita', {
+            method:'POST', 
+            headers:{'Content-Type':'application/json'}, 
+            body:JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+            alert("Visita guardada con éxito");
+            location.href = "/";
+        }
     }
 </script>
+
+<style>
+    textarea { width: 100%; height: 80px; margin-top: 10px; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+    .btn-blue { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+</style>
 {% endblock %}
