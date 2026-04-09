@@ -6,9 +6,9 @@ from datetime import datetime
 from io import BytesIO
 
 app = Flask(__name__)
-app.secret_key = "power_trade_ultra_2026"
+app.secret_key = "power_trade_2026_key"
 
-# CONEXIÓN
+# MONGO CONEXIÓN
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
@@ -29,55 +29,59 @@ def calcular_distancia(c1, c2):
     except: return 0
 
 @app.route('/')
-def home():
+def index():
     if 'usuario' not in session: return redirect(url_for('login'))
-    return render_template('app.html', usuario=session['usuario'])
+    # La página principal ahora muestra las visitas
+    datos = list(visitas_col.find().sort("fecha", -1))
+    return render_template('ver_visitas.html', datos=datos)
 
-# BUSCADOR POR BOTÓN (Para no saturar con 5000 registros)
-@app.route('/api/buscar_puntos')
-def buscar_puntos():
+@app.route('/nueva_visita')
+def nueva_visita():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('nueva_visita.html')
+
+@app.route('/nuevo_punto')
+def nuevo_punto():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('nuevo_punto.html')
+
+@app.route('/ver_puntos')
+def ver_puntos():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('ver_puntos.html')
+
+# --- APIs ---
+@app.route('/api/buscar', methods=['GET'])
+def buscar():
     q = request.args.get('q', '').strip()
-    if not q: return jsonify([])
-    # Búsqueda no exacta (Regex) en Nombre o BMB
-    query = {"$or": [
-        {"Nombre de punto": {"$regex": q, "$options": "i"}},
-        {"BMB": {"$regex": q, "$options": "i"}}
-    ]}
-    return jsonify(list(puntos_col.find(query, {"_id":0}).limit(50)))
-
-@app.route('/api/guardar_punto', methods=['POST'])
-def guardar_punto():
-    data = request.json
-    # FECHA LIMPIA SIN HORA
-    data['Fecha_Creacion'] = datetime.now().strftime("%Y-%m-%d")
-    ultimo = puntos_col.find_one(sort=[("Id", -1)])
-    data['Id'] = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
-    puntos_col.insert_one(data)
-    return jsonify({"status":"ok"})
+    query = {"$or": [{"Nombre de punto": {"$regex": q, "$options": "i"}}, {"BMB": {"$regex": q, "$options": "i"}}]}
+    return jsonify(list(puntos_col.find(query, {"_id":0}).limit(20)))
 
 @app.route('/api/guardar_visita', methods=['POST'])
-def guardar_visita():
+def guardar_v():
     data = request.json
     data['distancia_real'] = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
-    # FECHA LIMPIA SIN HORA
     data['fecha'] = datetime.now().strftime("%Y-%m-%d")
+    data['usuario'] = session['usuario']
     visitas_col.insert_one(data)
     return jsonify({"status":"ok", "distancia": data['distancia_real']})
 
-@app.route('/api/descargar_reporte')
-def descargar_reporte():
-    f_ini = request.args.get('inicio')
-    f_fin = request.args.get('fin')
-    query = {"fecha": {"$gte": f_ini, "$lte": f_fin}}
-    datos = list(visitas_col.find(query, {"_id":0}))
-    if not datos: return "No hay datos", 404
-    
-    df = pd.DataFrame(datos)
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+@app.route('/api/guardar_punto', methods=['POST'])
+def guardar_p():
+    data = request.json
+    data['fecha_creacion'] = datetime.now().strftime("%Y-%m-%d")
+    puntos_col.insert_one(data)
+    return jsonify({"status":"ok"})
+
+@app.route('/descargar')
+def descargar():
+    ini, fin = request.args.get('ini'), request.args.get('fin')
+    df = pd.DataFrame(list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0})))
+    out = BytesIO()
+    with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False)
-    output.seek(0)
-    return send_file(output, mimetype='application/vnd.ms-excel', attachment_filename=f"Reporte_{f_ini}.xlsx", as_attachment=True)
+    out.seek(0)
+    return send_file(out, mimetype='application/vnd.ms-excel', attachment_filename=f"Reporte.xlsx", as_attachment=True)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -85,12 +89,13 @@ def login():
         cc = request.form.get('cc')
         if cc in USUARIOS:
             session['usuario'] = USUARIOS[cc]
-            return redirect(url_for('home'))
-        return render_template('login.html', error="Cédula incorrecta")
+            return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/logout')
-def logout(): session.clear(); return redirect(url_for('login'))
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
