@@ -15,7 +15,6 @@ try:
     db = client['POWER_TRADE']
     puntos_col = db['Puntos de Venta']
     visitas_col = db['Visitas']
-    # Prueba de conexión simple
     client.admin.command('ping')
 except Exception as e:
     print(f"ERROR CRÍTICO DE CONEXIÓN: {e}")
@@ -38,30 +37,27 @@ def calcular_distancia(c1, c2):
 
 @app.route('/')
 def index():
-    """📊 Pestaña: Visitas (Historial)"""
     if 'usuario' not in session: return redirect(url_for('login'))
     try:
-        # Traemos las visitas. Si la colección no existe, devolvemos lista vacía.
-        datos = list(visitas_col.find().sort("fecha", -1).limit(50))
+        # CORRECCIÓN: Se agrega allowDiskUse=True para manejar el volumen de fotos en el ordenamiento
+        cursor = visitas_col.find().sort("fecha", -1).limit(50).allow_disk_use(True)
+        datos = list(cursor)
         return render_template('ver_visitas.html', datos=datos)
     except Exception as e:
         return f"Error en la base de datos: {e}", 500
 
 @app.route('/nueva_visita')
 def nueva_visita():
-    """📝 Pestaña: Registrar"""
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('nueva_visita.html')
 
 @app.route('/ver_puntos')
 def ver_puntos():
-    """🏢 Pestaña: Puntos"""
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('ver_puntos.html')
 
 @app.route('/nuevo_punto')
 def nuevo_punto():
-    """➕ Pestaña: Nuevo"""
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('nuevo_punto.html')
 
@@ -107,7 +103,9 @@ def filtrar_historial():
         query["fecha"] = {"$gte": ini, "$lte": fin}
     
     try:
-        res = list(visitas_col.find(query, {"_id": 0}).sort("fecha", -1).limit(100))
+        # CORRECCIÓN: Se agrega allowDiskUse=True también aquí
+        cursor = visitas_col.find(query, {"_id": 0}).sort("fecha", -1).limit(100).allow_disk_use(True)
+        res = list(cursor)
         return jsonify(res)
     except:
         return jsonify([])
@@ -164,7 +162,8 @@ def descargar():
     ini = request.args.get('ini')
     fin = request.args.get('fin')
     try:
-        visitas = list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0}))
+        # CORRECCIÓN: Se agrega allowDiskUse=True para la descarga de reportes
+        visitas = list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0}).allow_disk_use(True))
         if not visitas: return "No hay datos", 404
         
         df = pd.DataFrame(visitas)
