@@ -1,52 +1,72 @@
 {% extends "layout.html" %}
 {% block content %}
-<h3>Listado de Puntos Registrados</h3>
+<style>
+    .card-punto { border-left: 5px solid #0056b3; transition: transform 0.2s; }
+    .card-punto:hover { transform: scale(1.01); }
+    .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; margin-top: 10px; }
+    .label-info { color: #777; font-weight: bold; text-transform: uppercase; font-size: 0.75em; }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="margin:0;">📍 Puntos Registrados</h3>
+    <a href="/nuevo_punto" class="btn-blue" style="width: auto; padding: 8px 15px; text-decoration: none; font-size: 13px;">+ Nuevo Punto</a>
+</div>
 
 <div class="card">
     <div style="display: flex; gap: 5px;">
-        <input type="text" id="q" placeholder="BMB o Nombre de punto..." style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+        <input type="text" id="q" placeholder="Buscar por Nombre o BMB..." style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
         <button class="btn-blue" style="width: 80px;" onclick="buscar()">Buscar</button>
     </div>
 </div>
 
-<div id="res"></div>
+<div id="res">
+    </div>
 
 <script>
-    // Ejecutar búsqueda al cargar la página para mostrar algo inicialmente
+    // Carga inicial de puntos al abrir la pestaña
     window.onload = () => buscar();
 
     async function buscar() {
         const query = document.getElementById('q').value;
-        const r = await fetch(`/api/buscar?q=${query}`);
-        const data = await r.json();
-        const div = document.getElementById('res'); 
-        div.innerHTML = "";
+        const resDiv = document.getElementById('res');
+        resDiv.innerHTML = "<p style='text-align:center;'>Cargando puntos...</p>";
 
-        if(data.length === 0) {
-            div.innerHTML = '<div class="card" style="text-align:center; color:#888;">No se encontraron puntos.</div>';
-            return;
-        }
+        try {
+            const r = await fetch(`/api/buscar?q=${query}`);
+            const data = await r.json();
+            resDiv.innerHTML = "";
 
-        data.forEach(p => {
-            let card = document.createElement('div');
-            card.className = "card";
-            card.style.borderLeft = "5px solid #0056b3";
+            if(data.length === 0) {
+                resDiv.innerHTML = '<div class="card" style="text-align:center; color:#888;">No se encontraron resultados.</div>';
+                return;
+            }
 
-            // Título principal
-            let contenido = `<div style="margin-bottom:8px;"><b style="font-size:16px; color:#0056b3;">${p['Nombre de punto']}</b></div>`;
-            contenido += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; font-size:13px;">`;
-            
-            // Iterar por todos los campos dinámicamente
-            Object.keys(p).forEach(key => {
-                if(key !== '_id' && key !== 'Nombre de punto' && p[key]) {
-                    contenido += `<div><span style="color:#777;">${key}:</span> <b>${p[key]}</b></div>`;
-                }
+            data.forEach(p => {
+                let card = document.createElement('div');
+                card.className = "card card-punto";
+                
+                let html = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <b style="font-size: 16px; color: #0056b3;">${p['Nombre de punto']}</b>
+                        <span style="background:#e7f0ff; color:#0056b3; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;">BMB: ${p.BMB || 'N/A'}</span>
+                    </div>
+                    <div class="grid-info">
+                `;
+
+                // Mostrar todos los campos excepto los internos
+                Object.keys(p).forEach(key => {
+                    if(!['_id', 'Nombre de punto', 'BMB'].includes(key) && p[key]) {
+                        html += `<div><div class="label-info">${key}</div><div>${p[key]}</div></div>`;
+                    }
+                });
+
+                html += `</div>`;
+                card.innerHTML = html;
+                resDiv.appendChild(card);
             });
-
-            contenido += `</div>`;
-            card.innerHTML = contenido;
-            div.appendChild(card);
-        });
+        } catch (e) {
+            resDiv.innerHTML = '<div class="card" style="color:red;">Error al conectar con el servidor.</div>';
+        }
     }
 </script>
 {% endblock %}
