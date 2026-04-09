@@ -22,7 +22,7 @@ def calcular_distancia(c1, c2):
         if not c1 or not c2: return 0
         lat1, lon1 = map(float, c1.split(','))
         lat2, lon2 = map(float, c2.split(','))
-        R = 6371000  # Radio de la Tierra en metros
+        R = 6371000  
         phi1, phi2 = math.radians(lat1), math.radians(lat2)
         dphi, dlam = math.radians(lat2-lat1), math.radians(lon2-lon1)
         a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlam/2)**2
@@ -41,20 +41,6 @@ def nueva_visita():
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('nueva_visita.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        cc = request.form.get('cc')
-        if cc in USUARIOS:
-            session['usuario'] = USUARIOS[cc]
-            return redirect(url_for('index'))
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
 # --- APIs ---
 @app.route('/api/buscar')
 def buscar():
@@ -65,22 +51,19 @@ def buscar():
 
 @app.route('/api/guardar_visita', methods=['POST'])
 def guardar_v():
-    if 'usuario' not in session: return jsonify({"status":"error", "msg":"No session"}), 401
+    if 'usuario' not in session: return jsonify({"status":"error", "msg":"Sin sesión"}), 401
     
-    # Datos de texto
     data = request.form
-    
-    # Validación de archivos obligatorios
     if 'foto_maquina' not in request.files or 'foto_fachada' not in request.files:
         return jsonify({"status":"error", "msg":"Fotos obligatorias faltantes"}), 400
 
     f_maquina = request.files['foto_maquina']
     f_fachada = request.files['foto_fachada']
 
-    # Crear documento de visita
     doc = {
         "Nombre de punto": data.get('Nombre de punto'),
         "BMB": data.get('BMB'),
+        "motivo": data.get('motivo'), # <--- Nuevo campo guardado
         "observacion": data.get('observacion'),
         "ubicacion_punto": data.get('ubicacion_punto'),
         "ubicacion_actual": data.get('ubicacion_actual'),
@@ -89,7 +72,6 @@ def guardar_v():
         "distancia_real": calcular_distancia(data.get('ubicacion_punto'), data.get('ubicacion_actual'))
     }
 
-    # Convertir fotos a Base64
     doc['foto_maquina'] = f"data:{f_maquina.content_type};base64,{base64.b64encode(f_maquina.read()).decode()}"
     doc['foto_fachada'] = f"data:{f_fachada.content_type};base64,{base64.b64encode(f_fachada.read()).decode()}"
 
@@ -97,5 +79,4 @@ def guardar_v():
     return jsonify({"status":"ok", "distancia": doc['distancia_real']})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
