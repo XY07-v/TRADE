@@ -6,7 +6,7 @@ from datetime import datetime
 from io import BytesIO
 
 app = Flask(__name__)
-app.secret_key = "pt_gold_2026_pro"
+app.secret_key = "power_trade_ultra_2026"
 
 # CONEXIÓN
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
@@ -17,7 +17,6 @@ visitas_col = db['Visitas']
 
 USUARIOS = {"12345678": "Andres Vanegas", "87654321": "Admin"}
 
-# DISTANCIA HAVERSINE
 def calcular_distancia(c1, c2):
     try:
         lat1, lon1 = map(float, c1.split(','))
@@ -34,49 +33,52 @@ def home():
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('app.html', usuario=session['usuario'])
 
-# BUSCADOR FILTRADO POR BOTÓN (Para +5000 registros)
+# BUSCADOR POR BOTÓN (Para no saturar con 5000 registros)
 @app.route('/api/buscar_puntos')
 def buscar_puntos():
     q = request.args.get('q', '').strip()
-    if len(q) < 2: return jsonify([])
-    # Búsqueda por palabra clave en Nombre o BMB
+    if not q: return jsonify([])
+    # Búsqueda no exacta (Regex) en Nombre o BMB
     query = {"$or": [
         {"Nombre de punto": {"$regex": q, "$options": "i"}},
         {"BMB": {"$regex": q, "$options": "i"}}
     ]}
     return jsonify(list(puntos_col.find(query, {"_id":0}).limit(50)))
 
+@app.route('/api/guardar_punto', methods=['POST'])
+def guardar_punto():
+    data = request.json
+    # FECHA LIMPIA SIN HORA
+    data['Fecha_Creacion'] = datetime.now().strftime("%Y-%m-%d")
+    ultimo = puntos_col.find_one(sort=[("Id", -1)])
+    data['Id'] = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
+    puntos_col.insert_one(data)
+    return jsonify({"status":"ok"})
+
 @app.route('/api/guardar_visita', methods=['POST'])
 def guardar_visita():
     data = request.json
     data['distancia_real'] = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
-    data['fecha'] = datetime.now().strftime("%Y-%m-%d") # FECHA CORTA
+    # FECHA LIMPIA SIN HORA
+    data['fecha'] = datetime.now().strftime("%Y-%m-%d")
     visitas_col.insert_one(data)
     return jsonify({"status":"ok", "distancia": data['distancia_real']})
 
-# DESCARGA EXCEL POR RANGO DE FECHAS
 @app.route('/api/descargar_reporte')
 def descargar_reporte():
     f_ini = request.args.get('inicio')
     f_fin = request.args.get('fin')
-    
     query = {"fecha": {"$gte": f_ini, "$lte": f_fin}}
     datos = list(visitas_col.find(query, {"_id":0}))
-    
-    if not datos: return "Sin datos en ese rango", 404
+    if not datos: return "No hay datos", 404
     
     df = pd.DataFrame(datos)
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Visitas')
+        df.to_excel(writer, index=False)
     output.seek(0)
-    
-    return send_file(output, 
-                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                     attachment_filename=f"Reporte_{f_ini}_al_{f_fin}.xlsx", 
-                     as_attachment=True)
+    return send_file(output, mimetype='application/vnd.ms-excel', attachment_filename=f"Reporte_{f_ini}.xlsx", as_attachment=True)
 
-# LOGIN & LOGOUT
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -84,7 +86,7 @@ def login():
         if cc in USUARIOS:
             session['usuario'] = USUARIOS[cc]
             return redirect(url_for('home'))
-        return render_template('login.html', error="Cédula no registrada")
+        return render_template('login.html', error="Cédula incorrecta")
     return render_template('login.html')
 
 @app.route('/logout')
