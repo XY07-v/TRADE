@@ -28,71 +28,77 @@ def calcular_distancia(c1, c2):
         return round(2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a)), 2)
     except: return 0
 
-# --- VISTAS ---
+# --- VISTAS (Aquí es donde se llaman todas las páginas) ---
 
 @app.route('/')
 def index():
     if 'usuario' not in session: return redirect(url_for('login'))
-    # Carga inicial: últimos 50 registros
     datos = list(visitas_col.find().sort("fecha", -1).limit(50))
     return render_template('ver_visitas.html', datos=datos)
 
-# (Rutas /nueva_visita, /nuevo_punto, /ver_puntos se mantienen igual que antes)
+@app.route('/nueva_visita')
+def nueva_visita():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('nueva_visita.html')
 
-# --- APIs ACTUALIZADAS ---
+@app.route('/nuevo_punto')
+def nuevo_punto():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('nuevo_punto.html')
+
+@app.route('/ver_puntos')
+def ver_puntos():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    return render_template('ver_puntos.html')
+
+# --- APIs DE CONSULTA Y GUARDADO ---
+
+@app.route('/api/buscar')
+def buscar():
+    q = request.args.get('q', '').strip()
+    if not q: return jsonify([])
+    query = {"$or": [{"Nombre de punto": {"$regex": q, "$options": "i"}}, {"BMB": {"$regex": q, "$options": "i"}}]}
+    return jsonify(list(puntos_col.find(query, {"_id":0}).limit(20)))
 
 @app.route('/api/filtrar_historial')
 def filtrar_historial():
     q = request.args.get('q', '').strip()
     ini = request.args.get('ini', '')
     fin = request.args.get('fin', '')
-    
     query = {}
-    
-    # Filtro por texto (Nombre o BMB)
     if q:
-        query["$or"] = [
-            {"Nombre de punto": {"$regex": q, "$options": "i"}},
-            {"BMB": {"$regex": q, "$options": "i"}}
-        ]
-    
-    # Filtro por rango de fechas
+        query["$or"] = [{"Nombre de punto": {"$regex": q, "$options": "i"}}, {"BMB": {"$regex": q, "$options": "i"}}]
     if ini and fin:
         query["fecha"] = {"$gte": ini, "$lte": fin}
-    elif ini:
-        query["fecha"] = {"$gte": ini}
-    elif fin:
-        query["fecha"] = {"$lte": fin}
-
     visitas = list(visitas_col.find(query, {"_id": 0}).sort("fecha", -1).limit(100))
     return jsonify(visitas)
 
+@app.route('/api/guardar_visita', methods=['POST'])
+def guardar_v():
+    data = request.json
+    data['distancia_real'] = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
+    data['fecha'] = datetime.now().strftime("%Y-%m-%d")
+    data['usuario'] = session.get('usuario')
+    visitas_col.insert_one(data)
+    return jsonify({"status":"ok", "distancia": data['distancia_real']})
+
+@app.route('/api/guardar_punto', methods=['POST'])
+def guardar_p():
+    data = request.json
+    data['fecha_creacion'] = datetime.now().strftime("%Y-%m-%d")
+    puntos_col.insert_one(data)
+    return jsonify({"status":"ok"})
+
 @app.route('/descargar')
 def descargar():
-    ini = request.args.get('ini')
-    fin = request.args.get('fin')
-    
-    if not ini or not fin:
-        return "Rango de fechas requerido", 400
-
-    query = {"fecha": {"$gte": ini, "$lte": fin}}
-    datos = list(visitas_col.find(query, {"_id":0}))
-    
-    if not datos:
-        return "No hay datos para este periodo", 404
-    
-    df = pd.DataFrame(datos)
+    ini, fin = request.args.get('ini'), request.args.get('fin')
+    df = pd.DataFrame(list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0})))
+    if df.empty: return "No hay datos", 404
     out = BytesIO()
     with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False)
     out.seek(0)
-    
-    return send_file(
-        out, 
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
-        download_name=f"Reporte_{ini}_{fin}.xlsx", 
-        as_attachment=True
-    )
+    return send_file(out, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name=f"Reporte_{ini}.xlsx", as_attachment=True)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
