@@ -1,8 +1,31 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    /* Estilos extra para fotos y carga */
+    .contenedor-fotos { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .campo-foto { flex: 1; min-width: 140px; background: #f8f9fa; border: 2px dashed #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; }
+    .campo-foto:hover { border-color: #007bff; background: #e9ecef; }
+    .campo-foto label { display: block; font-size: 0.8em; font-weight: bold; color: #555; cursor: pointer; }
+    .campo-foto input { width: 100%; margin-top: 5px; font-size: 0.8em; }
+    .previsualizacion { max-width: 100%; max-height: 100px; margin-top: 5px; border-radius: 4px; display: none; }
+    
+    /* Overlay de carga */
+    #loading-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p style="margin-top: 10px; font-weight: bold; color: #007bff;">Guardando visita y subiendo fotos...</p>
+</div>
+
 <h3>Registrar Visita</h3>
 
-<div class="card">
+<div class="card" id="seccion-buscar">
     <input type="text" id="q" placeholder="Buscar por nombre o BMB...">
     <button class="btn-blue" onclick="buscar()">Consultar</button>
 </div>
@@ -12,12 +35,28 @@
 <div id="form_v" style="display:none;" class="card">
     <h4 id="v_tit" style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px;"></h4>
     
-    <div id="campos_dinamicos" style="margin-bottom: 15px; font-size: 0.9em;"></div>
+    <div id="campos_dinamicos" style="margin-bottom: 15px; font-size: 0.9em; color: #666;"></div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+
+    <label><b>Fotos Obligatorias</b></label>
+    <div class="contenedor-fotos">
+        <div class="campo-foto" onclick="document.getElementById('foto_maquina').click()">
+            <label for="foto_maquina">📸 Foto Máquina</label>
+            <input type="file" id="foto_maquina" name="foto_maquina" accept="image/*" capture="camera" required onchange="previsualizar(this, 'prev_m')">
+            <img id="prev_m" class="previsualizacion">
+        </div>
+        <div class="campo-foto" onclick="document.getElementById('foto_fachada').click()">
+            <label for="foto_fachada">📸 Foto Fachada</label>
+            <input type="file" id="foto_fachada" name="foto_fachada" accept="image/*" capture="camera" required onchange="previsualizar(this, 'prev_f')">
+            <img id="prev_f" class="previsualizacion">
+        </div>
+    </div>
 
     <label><b>Observaciones de la visita:</b></label>
-    <textarea id="obs" placeholder="Escriba aquí las novedades..."></textarea>
+    <textarea id="obs" placeholder="Escriba aquí las novedades, inventario, etc..." style="width: 100%; height: 70px; margin-top: 5px;"></textarea>
     
-    <button class="btn-blue" style="width: 100%; margin-top: 10px;" onclick="enviar()">Guardar Visita</button>
+    <button class="btn-blue" style="width: 100%; margin-top: 15px; padding: 12px; font-size: 1.1em;" onclick="enviar()">Finalizar y Guardar</button>
 </div>
 
 <script>
@@ -26,7 +65,11 @@
     // Obtener ubicación al cargar
     navigator.geolocation.getCurrentPosition(
         p => miGPS = `${p.coords.latitude},${p.coords.longitude}`,
-        e => console.error("Error de GPS:", e)
+        e => { 
+            console.error("Error de GPS:", e);
+            alert("Atención: No se pudo obtener tu ubicación GPS. Es posible que la distancia no se calcule correctamente.");
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
     );
 
     async function buscar() {
@@ -39,16 +82,22 @@
         const div = document.getElementById('res'); 
         div.innerHTML = "";
         
+        if(data.length === 0){
+            div.innerHTML = "<div class='card' style='color:red;'>No se encontraron puntos.</div>";
+            return;
+        }
+
         data.forEach(p => {
             let d = document.createElement('div'); 
             d.className = "card"; 
             d.style.cursor = "pointer";
-            d.innerText = `${p['Nombre de punto']} (${p['BMB'] || 'Sin BMB'})`;
+            d.innerHTML = `<b>${p['Nombre de punto']}</b> <span style='color:#777; font-size:0.9em;'>- ${p['BMB'] || 'Sin BMB'}</span>`;
             
             d.onclick = () => { 
                 pSel = p; 
                 mostrarFormulario(p);
                 div.innerHTML = ""; 
+                document.getElementById('seccion-buscar').style.display = 'none';
             };
             div.appendChild(d);
         });
@@ -59,15 +108,14 @@
         const contenedor = document.getElementById('campos_dinamicos');
         contenedor.innerHTML = ""; // Limpiar previos
 
-        // Iterar sobre todos los campos del objeto proveniente de MongoDB
-        // Excluimos campos técnicos o que ya manejamos
-        const excluidos = ['_id', 'Ubicacion', 'Nombre de punto'];
+        // Campos a NO mostrar
+        const excluidos = ['_id', 'Ubicacion', 'Nombre de punto', 'BMB', 'fecha_creacion'];
 
         Object.keys(p).forEach(key => {
-            if (!excluidos.includes(key)) {
+            if (!excluidos.includes(key) && p[key]) {
                 let p_info = document.createElement('p');
-                p_info.innerHTML = `<strong>${key}:</strong> ${p[key]}`;
-                p_info.style.margin = "5px 0";
+                p_info.innerHTML = `<strong style="color:#555;">${key}:</strong> ${p[key]}`;
+                p_info.style.margin = "3px 0";
                 contenedor.appendChild(p_info);
             }
         });
@@ -75,34 +123,74 @@
         document.getElementById('form_v').style.display = "block";
     }
 
+    // Función para mostrar miniatura de la foto tomada
+    function previsualizar(input, idInputPrevio) {
+        const prev = document.getElementById(idInputPrevio);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                prev.src = e.target.result;
+                prev.style.display = 'block';
+                // Cambiar estilo del contenedor padre para indicar que ya hay foto
+                input.parentElement.style.borderColor = "#28a745";
+                input.parentElement.style.background = "#e8f5e9";
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
     async function enviar() {
         if(!pSel) return;
 
-        const payload = { 
-            "Nombre de punto": pSel['Nombre de punto'], 
-            "BMB": pSel.BMB, 
-            "observacion": document.getElementById('obs').value, 
-            "ubicacion_punto": pSel.Ubicacion, 
-            "ubicacion_actual": miGPS,
-            "detalles_punto": pSel // Enviamos todo el objeto por si quieres guardar una foto del estado en ese momento
-        };
+        // 1. VALIDACIÓN OBLIGATORIA DE FOTOS
+        const fileMaquina = document.getElementById('foto_maquina').files[0];
+        const fileFachada = document.getElementById('foto_fachada').files[0];
 
-        const res = await fetch('/api/guardar_visita', {
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify(payload)
-        });
+        if(!fileMaquina || !fileFachada) {
+            alert("⛔ ERROR: La foto de la MÁQUINA y la foto de la FACHADA son obligatorias para guardar la visita.");
+            return; // Detiene la ejecución
+        }
 
-        if(res.ok) {
-            alert("Visita guardada con éxito");
-            location.href = "/";
+        // Mostrar pantalla de carga
+        document.getElementById('loading-overlay').style.display = 'flex';
+
+        // 2. Preparar FormData (necesario para enviar archivos)
+        const formData = new FormData();
+        formData.append('Nombre de punto', pSel['Nombre de punto']);
+        formData.append('BMB', pSel.BMB || '');
+        formData.append('observacion', document.getElementById('obs').value);
+        formData.append('ubicacion_punto', pSel.Ubicacion || '');
+        formData.append('ubicacion_actual', miGPS);
+        
+        // Agregar los archivos
+        formData.append('foto_maquina', fileMaquina);
+        formData.append('foto_fachada', fileFachada);
+
+        // Opcional: enviar datos extra del punto si existen
+        // formData.append('datos_extra_punto', JSON.stringify(pSel));
+
+        try {
+            // 3. Enviar vía POST (sin Content-Type header, el navegador lo pone automáticamente con FormData)
+            const res = await fetch('/api/guardar_visita', {
+                method:'POST',
+                body: formData
+            });
+
+            const rData = await res.json();
+
+            if(res.ok && rData.status === 'ok') {
+                alert(`✅ Visita guardada correctamente.\nDistancia calculada: ${rData.distancia} metros.`);
+                location.href = "/";
+            } else {
+                throw new Error(rData.error || "Error desconocido en el servidor");
+            }
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            alert("❌ Hubo un error al guardar la visita: " + error.message);
+        } finally {
+            // Ocultar pantalla de carga
+            document.getElementById('loading-overlay').style.display = 'none';
         }
     }
 </script>
-
-<style>
-    textarea { width: 100%; height: 80px; margin-top: 10px; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-    .btn-blue { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-    .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-</style>
 {% endblock %}
