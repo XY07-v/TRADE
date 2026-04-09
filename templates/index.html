@@ -2,26 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creación de Punto</title>
     <style>
         :root { --ios-bg: #F2F2F7; --ios-blue: #007AFF; }
         body { font-family: -apple-system, sans-serif; background-color: var(--ios-bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        h2 { text-align: center; font-weight: 600; margin-bottom: 25px; color: #1c1c1e; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-size: 14px; color: #8e8e93; font-weight: 500; }
-        input, select { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--ios-bg); font-size: 16px; box-sizing: border-box; outline: none; color: #1c1c1e; }
-        input:focus { background: #e5e5ea; }
-        input:disabled { color: #8e8e93; }
-        button { width: 100%; padding: 16px; background: var(--ios-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-top: 15px; cursor: pointer; }
-        #status { text-align: center; font-size: 12px; color: var(--ios-blue); margin-top: 12px; font-weight: 500; }
+        label { display: block; margin-bottom: 5px; font-size: 13px; color: #8e8e93; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--ios-bg); font-size: 16px; box-sizing: border-box; outline: none; }
+        input:disabled { background: #E5E5EA; color: #8e8e93; cursor: not-allowed; }
+        button { width: 100%; padding: 16px; background: var(--ios-blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        #status { text-align: center; font-size: 12px; color: var(--ios-blue); margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Creación de Punto</h2>
+    <div class="header">
+        <h2 style="margin:0; font-size: 20px;">Nuevo Punto</h2>
+        <a href="/logout" style="font-size: 12px; color: #FF3B30; text-decoration: none;">Cerrar Sesión</a>
+    </div>
+
     <form id="puntoForm">
         {% for col in columnas %}
             <div class="group">
@@ -30,11 +33,14 @@
                 {% if col == "Id" %}
                     <input type="text" id="{{ col }}" value="{{ next_id }}" disabled>
                 
+                {% elif col == "Desarrollador" %}
+                    <input type="text" id="{{ col }}" value="{{ usuario }}" disabled>
+
                 {% elif col == "Direccion" %}
-                    <input type="text" id="{{ col }}" placeholder="Buscando calle...">
+                    <input type="text" id="{{ col }}" placeholder="Calculando dirección..." readonly>
 
                 {% elif col == "Ubicacion" %}
-                    <input type="text" id="{{ col }}" placeholder="Coordenadas GPS..." readonly>
+                    <input type="text" id="{{ col }}" placeholder="Obteniendo GPS..." readonly>
 
                 {% elif col == "Ciudad" %}
                     <select id="{{ col }}" onchange="updateDepto()">
@@ -47,29 +53,23 @@
                 {% elif col == "Departamento" %}
                     <input type="text" id="{{ col }}" value="Cundinamarca" disabled>
 
-                {% elif col == "Desarrollador" %}
-                    <select id="{{ col }}">
-                        <option value="Andrés Vanegas">Andrés Vanegas</option>
-                        <option value="Admin">Admin</option>
-                    </select>
-
                 {% elif col == "Estado" %}
-                    <select id="{{ col }}">
-                        <option value="Habilitado">Habilitado</option>
-                        <option value="Deshabilitado">Deshabilitado</option>
-                    </select>
+                    <input type="text" id="{{ col }}" value="Habilitado" disabled>
 
                 {% elif col == "Rango" %}
                     <input type="text" id="{{ col }}" value="200" disabled>
 
+                {% elif col == "BMB" %}
+                    <input type="number" id="{{ col }}" placeholder="Ingrese número BMB" required>
+
                 {% else %}
-                    <input type="text" id="{{ col }}" placeholder="Escriba aquí...">
+                    <input type="text" id="{{ col }}" placeholder="Completar..." required>
                 {% endif %}
             </div>
         {% endfor %}
 
-        <button type="button" onclick="save()">Finalizar Registro</button>
-        <p id="status">Esperando señal de GPS...</p>
+        <button type="button" onclick="save()">Guardar Punto</button>
+        <p id="status">Iniciando localización...</p>
     </form>
 </div>
 
@@ -87,21 +87,17 @@
             navigator.geolocation.getCurrentPosition(async (p) => {
                 const lat = p.coords.latitude;
                 const lon = p.coords.longitude;
-                if(document.getElementById('Ubicacion')) document.getElementById('Ubicacion').value = `${lat}, ${lon}`;
-                document.getElementById('status').innerText = "📍 Ubicación capturada";
+                document.getElementById('Ubicacion').value = `${lat}, ${lon}`;
+                document.getElementById('status').innerText = "📍 GPS Localizado";
 
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                     const d = await res.json();
-                    const street = d.address.road || d.address.pedestrian || "Calle detectada";
-                    const house = d.address.house_number || "";
-                    if(document.getElementById('Direccion')) document.getElementById('Direccion').value = `${street} ${house ? '# ' + house : ''}`;
+                    document.getElementById('Direccion').value = d.display_name.split(',')[0] + " " + (d.address.house_number || "");
                 } catch (e) {
-                    if(document.getElementById('Direccion')) document.getElementById('Direccion').value = "Dirección no disponible";
+                    document.getElementById('Direccion').value = "Error al obtener calle";
                 }
-            }, () => {
-                document.getElementById('status').innerText = "❌ Error: Activa el GPS";
-            }, { enableHighAccuracy: true });
+            }, null, { enableHighAccuracy: true });
         }
     }
 
@@ -120,8 +116,12 @@
         });
 
         const resJson = await resp.json();
-        alert(resJson.message);
-        if(resJson.status === 'success') location.reload();
+        if(resp.ok) {
+            alert(resJson.message);
+            location.reload();
+        } else {
+            alert("⚠️ Error: " + resJson.message);
+        }
     }
 
     window.onload = initGPS;
