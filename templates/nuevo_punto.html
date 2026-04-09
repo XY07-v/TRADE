@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Crear Punto</h3>
+<div class="card">
+    <input type="number" id="bmb" placeholder="BMB">
+    <input type="text" id="nom" placeholder="Nombre">
+    <input type="text" id="gps" readonly>
+    <button class="btn-blue" onclick="guardar()">Crear</button>
+</div>
+<script>
+    let miGPS = "";
+    navigator.geolocation.getCurrentPosition(p => { miGPS = `${p.coords.latitude},${p.coords.longitude}`; document.getElementById('gps').value = miGPS; });
+    async function guardar() {
+        const payload = { "BMB": document.getElementById('bmb').value, "Nombre de punto": document.getElementById('nom').value, "Ubicacion": miGPS };
+        await fetch('/api/guardar_punto', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+        location.href = "/ver_puntos";
+    }
+</script>
+{% endblock %}
