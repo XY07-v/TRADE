@@ -2,71 +2,99 @@
 {% block content %}
 <style>
     .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .btn-blue { background: #0056b3; color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
-    .foto-box { border: 2px dashed #bbb; padding: 10px; text-align: center; border-radius: 8px; margin-bottom: 10px; flex: 1; position: relative; }
+    .btn-blue { background: #0056b3; color: white; border: none; padding: 12px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
+    
+    /* Estilo para Motivos (Selección única) */
+    .motivo-container { display: flex; gap: 10px; margin: 10px 0 20px 0; }
+    .motivo-option { flex: 1; position: relative; }
+    .motivo-option input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+    .motivo-label { display: block; padding: 10px; text-align: center; background: #f0f2f5; border: 2px solid #ddd; border-radius: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; color: #555; }
+    .motivo-option input:checked + .motivo-label { border-color: #0056b3; background: #e7f0ff; color: #0056b3; }
+
+    .foto-box { border: 2px dashed #bbb; padding: 10px; text-align: center; border-radius: 8px; margin-bottom: 15px; flex: 1; position: relative; min-height: 80px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     .foto-box input { opacity: 0; position: absolute; width: 100%; height: 100%; top:0; left:0; cursor: pointer; }
     .foto-box.lleno { border-color: #28a745; background: #e8f5e9; }
-    .preview { width: 100%; max-height: 120px; object-fit: contain; display: none; margin-top: 5px; }
-    #loading { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); color:white; justify-content:center; align-items:center; z-index:9999; flex-direction:column; }
+    .preview { width: 100%; max-height: 100px; object-fit: contain; display: none; margin-top: 5px; }
+    
+    #loading { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; justify-content:center; align-items:center; z-index:9999; flex-direction:column; }
+    .spinner { border:4px solid #f3f3f3; border-top:4px solid #3498db; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin-bottom: 10px;}
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 
 <div id="loading">
-    <div style="border:4px solid #f3f3f3; border-top:4px solid #3498db; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
-    <p>Guardando visita...</p>
+    <div class="spinner"></div>
+    <p>Subiendo Reporte y Fotos...</p>
 </div>
 
 <h3>Registrar Visita</h3>
 
 <div class="card" id="busqueda_sec">
-    <input type="text" id="q" placeholder="Buscar punto o BMB..." style="width: 70%; padding: 8px;">
-    <button class="btn-blue" style="width: 25%;" onclick="buscar()">Ver</button>
+    <div style="display: flex; gap: 5px;">
+        <input type="text" id="q" placeholder="Buscar punto o BMB..." style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+        <button class="btn-blue" style="width: 80px;" onclick="buscar()">Buscar</button>
+    </div>
 </div>
 
 <div id="res"></div>
 
 <div id="form_v" style="display:none;" class="card">
-    <h4 id="v_tit" style="margin-top:0; color:#0056b3;"></h4>
-    <div id="detalles_bd" style="font-size: 0.85em; margin-bottom: 15px; color: #555;"></div>
+    <h4 id="v_tit" style="margin-top:0; color:#0056b3; border-bottom: 1px solid #eee; padding-bottom: 8px;"></h4>
+    <div id="detalles_bd" style="font-size: 0.85em; margin-bottom: 15px; color: #666; line-height: 1.4;"></div>
 
-    <div style="display: flex; gap: 10px;">
+    <label><b>Seleccione Motivo:*</b></label>
+    <div class="motivo-container">
+        <label class="motivo-option">
+            <input type="radio" name="motivo" value="Fuera de rango">
+            <span class="motivo-label">Fuera de rango</span>
+        </label>
+        <label class="motivo-option">
+            <input type="radio" name="motivo" value="Error App Trade">
+            <span class="motivo-label">Error App Trade</span>
+        </label>
+    </div>
+
+    <label><b>Fotos Obligatorias:*</b></label>
+    <div style="display: flex; gap: 10px; margin-top: 5px;">
         <div class="foto-box" id="box_m">
-            <span>📸 Foto Máquina*</span>
+            <span style="font-size: 0.8em;">📸 Foto Máquina</span>
             <input type="file" id="f_maquina" accept="image/*" capture="camera" onchange="preview(this, 'prev_m', 'box_m')">
             <img id="prev_m" class="preview">
         </div>
         <div class="foto-box" id="box_f">
-            <span>📸 Foto Fachada*</span>
+            <span style="font-size: 0.8em;">📸 Foto Fachada</span>
             <input type="file" id="f_fachada" accept="image/*" capture="camera" onchange="preview(this, 'prev_f', 'box_f')">
             <img id="prev_f" class="preview">
         </div>
     </div>
 
-    <textarea id="obs" placeholder="Observaciones..." style="width:100%; height:60px; margin-bottom:10px;"></textarea>
-    <button class="btn-blue" onclick="enviar()">GUARDAR VISITA</button>
+    <label><b>Novedades / Observaciones:</b></label>
+    <textarea id="obs" placeholder="Escriba aquí..." style="width:100%; height:60px; margin: 5px 0 15px 0; border-radius: 5px; border: 1px solid #ccc; padding: 5px;"></textarea>
+    
+    <button class="btn-blue" onclick="enviar()">FINALIZAR REPORTE</button>
 </div>
 
 <script>
     let miGPS = "", pSel = null;
-    navigator.geolocation.getCurrentPosition(p => miGPS = `${p.coords.latitude},${p.coords.longitude}`);
+    navigator.geolocation.getCurrentPosition(p => miGPS = `${p.coords.latitude},${p.coords.longitude}`, null, {enableHighAccuracy: true});
 
     async function buscar() {
         const q = document.getElementById('q').value;
+        if(!q) return;
         const r = await fetch(`/api/buscar?q=${q}`);
         const data = await r.json();
         const div = document.getElementById('res'); div.innerHTML = "";
         data.forEach(p => {
             let d = document.createElement('div'); d.className = "card"; d.style.cursor="pointer";
-            d.innerText = p['Nombre de punto'];
+            d.innerHTML = `<strong>${p['Nombre de punto']}</strong><br><small style="color:gray;">BMB: ${p.BMB || 'N/A'}</small>`;
             d.onclick = () => {
                 pSel = p;
                 document.getElementById('v_tit').innerText = p['Nombre de punto'];
                 document.getElementById('busqueda_sec').style.display = "none";
                 div.innerHTML = "";
                 
-                // Cargar campos dinámicos
                 const det = document.getElementById('detalles_bd'); det.innerHTML = "";
                 Object.keys(p).forEach(key => {
-                    if(!['_id', 'Ubicacion', 'Nombre de punto'].includes(key)) {
+                    if(!['_id', 'Ubicacion', 'Nombre de punto', 'BMB'].includes(key)) {
                         det.innerHTML += `<div><b>${key}:</b> ${p[key]}</div>`;
                     }
                 });
@@ -83,15 +111,19 @@
                 const img = document.getElementById(imgId);
                 img.src = e.target.result; img.style.display = "block";
                 document.getElementById(boxId).classList.add('lleno');
+                document.getElementById(boxId).querySelector('span').style.display = 'none';
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
 
     async function enviar() {
+        // Validaciones
+        const motivo = document.querySelector('input[name="motivo"]:checked');
         const fM = document.getElementById('f_maquina').files[0];
         const fF = document.getElementById('f_fachada').files[0];
 
+        if(!motivo) return alert("Seleccione el Motivo de la visita");
         if(!fM || !fF) return alert("Ambas fotos son obligatorias");
 
         document.getElementById('loading').style.display = "flex";
@@ -99,24 +131,22 @@
         const fd = new FormData();
         fd.append('Nombre de punto', pSel['Nombre de punto']);
         fd.append('BMB', pSel.BMB || '');
+        fd.append('motivo', motivo.value);
         fd.append('observacion', document.getElementById('obs').value);
         fd.append('ubicacion_punto', pSel.Ubicacion);
         fd.append('ubicacion_actual', miGPS);
         fd.append('foto_maquina', fM);
         fd.append('foto_fachada', fF);
 
-        const r = await fetch('/api/guardar_visita', { method:'POST', body: fd });
-        const res = await r.json();
-        
-        if(res.status === 'ok') {
-            alert("Guardado. Distancia: " + res.distancia + "m");
-            location.href = "/";
-        } else {
-            alert("Error al guardar");
-            document.getElementById('loading').style.display = "none";
-        }
+        try {
+            const r = await fetch('/api/guardar_visita', { method:'POST', body: fd });
+            const res = await r.json();
+            if(res.status === 'ok') {
+                alert(`¡Éxito! Distancia: ${res.distancia} metros.`);
+                location.href = "/";
+            } else { alert("Error del servidor: " + res.msg); }
+        } catch(e) { alert("Error de conexión"); }
+        finally { document.getElementById('loading').style.display = "none"; }
     }
 </script>
-
-<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 {% endblock %}
