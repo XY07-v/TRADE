@@ -1,19 +1,97 @@
 {% extends "layout.html" %}
 {% block content %}
-<h3>Crear Punto</h3>
+<style>
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #444; }
+    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    input[readonly] { background-color: #f0f0f0; color: #777; cursor: not-allowed; }
+    .gps-status { font-size: 11px; margin-top: 5px; color: #0056b3; font-weight: bold; }
+</style>
+
+<h3>Registrar Nuevo Punto</h3>
+
 <div class="card">
-    <input type="number" id="bmb" placeholder="BMB">
-    <input type="text" id="nom" placeholder="Nombre">
-    <input type="text" id="gps" readonly>
-    <button class="btn-blue" onclick="guardar()">Crear</button>
+    <div class="form-group">
+        <label>Código BMB:</label>
+        <input type="text" id="bmb" placeholder="Ej: 123456">
+    </div>
+
+    <div class="form-group">
+        <label>Nombre del Punto:</label>
+        <input type="text" id="nom" placeholder="Ej: Tienda de la Esquina">
+    </div>
+
+    <div class="form-group">
+        <label>Coordenadas GPS (Automático):</label>
+        <input type="text" id="gps" readonly placeholder="Obteniendo ubicación...">
+        <div id="gps_msg" class="gps-status">⏳ Esperando señal GPS...</div>
+    </div>
+
+    <button id="btn_guardar" class="btn-blue" onclick="guardar()" disabled style="background:#ccc;">Esperando GPS...</button>
 </div>
+
 <script>
     let miGPS = "";
-    navigator.geolocation.getCurrentPosition(p => { miGPS = `${p.coords.latitude},${p.coords.longitude}`; document.getElementById('gps').value = miGPS; });
+
+    // Solicitar ubicación con alta precisión
+    navigator.geolocation.getCurrentPosition(
+        p => { 
+            miGPS = `${p.coords.latitude},${p.coords.longitude}`; 
+            document.getElementById('gps').value = miGPS;
+            document.getElementById('gps_msg').innerText = "✅ Ubicación obtenida correctamente";
+            document.getElementById('gps_msg').style.color = "green";
+            
+            // Habilitar botón
+            const btn = document.getElementById('btn_guardar');
+            btn.disabled = false;
+            btn.style.background = "#0056b3";
+            btn.innerText = "Crear Punto";
+        },
+        e => {
+            document.getElementById('gps_msg').innerText = "❌ Error: Activa el GPS de tu celular";
+            document.getElementById('gps_msg').style.color = "red";
+        },
+        { enableHighAccuracy: true }
+    );
+
     async function guardar() {
-        const payload = { "BMB": document.getElementById('bmb').value, "Nombre de punto": document.getElementById('nom').value, "Ubicacion": miGPS };
-        await fetch('/api/guardar_punto', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-        location.href = "/ver_puntos";
+        const bmb = document.getElementById('bmb').value;
+        const nom = document.getElementById('nom').value;
+
+        if(!bmb || !nom) {
+            alert("Por favor llena el BMB y el Nombre");
+            return;
+        }
+
+        const btn = document.getElementById('btn_guardar');
+        btn.innerText = "Guardando...";
+        btn.disabled = true;
+
+        const payload = { 
+            "BMB": bmb, 
+            "Nombre de punto": nom, 
+            "Ubicacion": miGPS 
+        };
+
+        try {
+            const r = await fetch('/api/guardar_punto', {
+                method:'POST', 
+                headers:{'Content-Type':'application/json'}, 
+                body:JSON.stringify(payload)
+            });
+
+            if(r.ok) {
+                alert("Punto creado exitosamente");
+                location.href = "/ver_puntos";
+            } else {
+                alert("Error al guardar en el servidor");
+            }
+        } catch(error) {
+            alert("Error de conexión");
+        } finally {
+            btn.innerText = "Crear Punto";
+            btn.disabled = false;
+        }
     }
 </script>
 {% endblock %}
