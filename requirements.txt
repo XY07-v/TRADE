@@ -1,9 +1,5 @@
 streamlit
 pymongo
 dnspython
-pandas
-streamlit-js-eval
-streamlit
-pymongo
 streamlit-js-eval
 geopy
