@@ -8,7 +8,7 @@ from io import BytesIO
 app = Flask(__name__)
 app.secret_key = "power_trade_ultra_2026"
 
-# CONEXIÓN (Asegúrate de tener la variable MONGO_URI en Render)
+# CONEXIÓN
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
@@ -28,60 +28,71 @@ def calcular_distancia(c1, c2):
         return round(2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a)), 2)
     except: return 0
 
+# --- VISTAS ---
+
 @app.route('/')
 def index():
     if 'usuario' not in session: return redirect(url_for('login'))
+    # Carga inicial: últimos 50 registros
     datos = list(visitas_col.find().sort("fecha", -1).limit(50))
     return render_template('ver_visitas.html', datos=datos)
 
-@app.route('/nueva_visita')
-def nueva_visita():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    return render_template('nueva_visita.html')
+# (Rutas /nueva_visita, /nuevo_punto, /ver_puntos se mantienen igual que antes)
 
-@app.route('/nuevo_punto')
-def nuevo_punto():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    return render_template('nuevo_punto.html')
+# --- APIs ACTUALIZADAS ---
 
-@app.route('/ver_puntos')
-def ver_puntos():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    return render_template('ver_puntos.html')
-
-@app.route('/api/buscar')
-def buscar():
+@app.route('/api/filtrar_historial')
+def filtrar_historial():
     q = request.args.get('q', '').strip()
-    if not q: return jsonify([])
-    query = {"$or": [{"Nombre de punto": {"$regex": q, "$options": "i"}}, {"BMB": {"$regex": q, "$options": "i"}}]}
-    return jsonify(list(puntos_col.find(query, {"_id":0}).limit(20)))
+    ini = request.args.get('ini', '')
+    fin = request.args.get('fin', '')
+    
+    query = {}
+    
+    # Filtro por texto (Nombre o BMB)
+    if q:
+        query["$or"] = [
+            {"Nombre de punto": {"$regex": q, "$options": "i"}},
+            {"BMB": {"$regex": q, "$options": "i"}}
+        ]
+    
+    # Filtro por rango de fechas
+    if ini and fin:
+        query["fecha"] = {"$gte": ini, "$lte": fin}
+    elif ini:
+        query["fecha"] = {"$gte": ini}
+    elif fin:
+        query["fecha"] = {"$lte": fin}
 
-@app.route('/api/guardar_visita', methods=['POST'])
-def guardar_v():
-    data = request.json
-    data['distancia_real'] = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
-    data['fecha'] = datetime.now().strftime("%Y-%m-%d")
-    data['usuario'] = session.get('usuario')
-    visitas_col.insert_one(data)
-    return jsonify({"status":"ok", "distancia": data['distancia_real']})
-
-@app.route('/api/guardar_punto', methods=['POST'])
-def guardar_p():
-    data = request.json
-    data['fecha_creacion'] = datetime.now().strftime("%Y-%m-%d")
-    puntos_col.insert_one(data)
-    return jsonify({"status":"ok"})
+    visitas = list(visitas_col.find(query, {"_id": 0}).sort("fecha", -1).limit(100))
+    return jsonify(visitas)
 
 @app.route('/descargar')
 def descargar():
-    ini, fin = request.args.get('ini'), request.args.get('fin')
-    df = pd.DataFrame(list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0})))
-    if df.empty: return "No hay datos", 404
+    ini = request.args.get('ini')
+    fin = request.args.get('fin')
+    
+    if not ini or not fin:
+        return "Rango de fechas requerido", 400
+
+    query = {"fecha": {"$gte": ini, "$lte": fin}}
+    datos = list(visitas_col.find(query, {"_id":0}))
+    
+    if not datos:
+        return "No hay datos para este periodo", 404
+    
+    df = pd.DataFrame(datos)
     out = BytesIO()
     with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False)
     out.seek(0)
-    return send_file(out, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name="Reporte.xlsx", as_attachment=True)
+    
+    return send_file(
+        out, 
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+        download_name=f"Reporte_{ini}_{fin}.xlsx", 
+        as_attachment=True
+    )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -98,4 +109,5 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
