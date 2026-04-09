@@ -8,7 +8,7 @@ from io import BytesIO
 app = Flask(__name__)
 app.secret_key = "power_trade_ultra_2026"
 
-# CONEXIÓN
+# CONEXIÓN (Asegúrate de tener la variable MONGO_URI en Render)
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
@@ -28,12 +28,9 @@ def calcular_distancia(c1, c2):
         return round(2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a)), 2)
     except: return 0
 
-# --- RUTAS DE NAVEGACIÓN ---
-
 @app.route('/')
 def index():
     if 'usuario' not in session: return redirect(url_for('login'))
-    # Traemos las últimas 50 visitas para la página principal
     datos = list(visitas_col.find().sort("fecha", -1).limit(50))
     return render_template('ver_visitas.html', datos=datos)
 
@@ -52,9 +49,7 @@ def ver_puntos():
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('ver_puntos.html')
 
-# --- APIs ---
-
-@app.route('/api/buscar', methods=['GET'])
+@app.route('/api/buscar')
 def buscar():
     q = request.args.get('q', '').strip()
     if not q: return jsonify([])
@@ -66,7 +61,7 @@ def guardar_v():
     data = request.json
     data['distancia_real'] = calcular_distancia(data['ubicacion_punto'], data['ubicacion_actual'])
     data['fecha'] = datetime.now().strftime("%Y-%m-%d")
-    data['usuario'] = session.get('usuario', 'Sistema')
+    data['usuario'] = session.get('usuario')
     visitas_col.insert_one(data)
     return jsonify({"status":"ok", "distancia": data['distancia_real']})
 
@@ -79,27 +74,14 @@ def guardar_p():
 
 @app.route('/descargar')
 def descargar():
-    try:
-        ini = request.args.get('ini')
-        fin = request.args.get('fin')
-        query = {"fecha": {"$gte": ini, "$lte": fin}}
-        df = pd.DataFrame(list(visitas_col.find(query, {"_id":0})))
-        
-        if df.empty: return "No hay datos para estas fechas", 404
-        
-        out = BytesIO()
-        with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False)
-        out.seek(0)
-        
-        return send_file(
-            out, 
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            download_name=f"Reporte_{ini}.xlsx",
-            as_attachment=True
-        )
-    except Exception as e:
-        return str(e), 500
+    ini, fin = request.args.get('ini'), request.args.get('fin')
+    df = pd.DataFrame(list(visitas_col.find({"fecha": {"$gte": ini, "$lte": fin}}, {"_id":0})))
+    if df.empty: return "No hay datos", 404
+    out = BytesIO()
+    with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    out.seek(0)
+    return send_file(out, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', download_name="Reporte.xlsx", as_attachment=True)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -108,7 +90,6 @@ def login():
         if cc in USUARIOS:
             session['usuario'] = USUARIOS[cc]
             return redirect(url_for('index'))
-        return render_template('login.html', error="Cédula no válida")
     return render_template('login.html')
 
 @app.route('/logout')
@@ -117,6 +98,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    # Render usa la variable de entorno PORT
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
