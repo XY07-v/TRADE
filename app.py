@@ -1,64 +1,130 @@
 import streamlit as st
 import os
 from pymongo import MongoClient
-import pandas as pd
+from datetime import datetime
 
-# Configuración de la página
-st.set_page_config(page_title="Registro Puntos de Venta", layout="centered")
+# --- CONFIGURACIÓN DE PÁGINA (ESTILO IOS) ---
+st.set_page_config(page_title="Registro PT", page_icon="📱", layout="centered")
 
-# 1. Conexión a MongoDB
-# Nota: En Render, configura MONGO_URI en 'Environment Variables'
+# CSS Personalizado para estética profesional y estrecha
+st.markdown("""
+    <style>
+    /* Fondo general */
+    .stApp {
+        background-color: #F2F2F7;
+    }
+    /* Contenedor del formulario */
+    [data-testid="stForm"] {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.05);
+        max-width: 500px;
+        margin: auto;
+    }
+    /* Botones de radio tipo segmentado */
+    div.row-widget.stRadio > div {
+        background-color: #E9E9EB;
+        padding: 4px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-around;
+    }
+    /* Estilo del botón principal */
+    .stButton > button {
+        width: 100%;
+        border-radius: 12px;
+        background-color: #007AFF;
+        color: white;
+        border: none;
+        font-weight: 500;
+        padding: 0.6rem;
+    }
+    /* Inputs redondeados */
+    input {
+        border-radius: 8px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- CONEXIÓN MONGODB ---
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
-
-@st.cache_resource
-def init_connection():
-    return MongoClient(MONGO_URI)
-
-client = init_connection()
+client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
 visitas_col = db['Puntos de Venta']
 
-st.title("📝 Formulario de Puntos de Venta")
-st.markdown("Ingrese la información para actualizar la base de datos.")
+# --- DICCIONARIOS MANUALES (Editable) ---
+# Aquí puedes agregar más ciudades y sus departamentos
+dict_ubicaciones = {
+    "Bogotá": "Cundinamarca",
+    "Medellín": "Antioquia",
+    "Cali": "Valle del Cauca",
+    "Barranquilla": "Atlántico",
+    "Cartagena": "Bolívar",
+    "Pereira": "Risaralda"
+}
 
-# 2. Obtener columnas dinámicamente
-# Traemos un registro de muestra para saber qué campos existen
-sample_doc = visitas_col.find_one()
-if sample_doc:
-    # Excluimos el ID de MongoDB para el formulario
-    columnas = [key for key in sample_doc.keys() if key != '_id']
-else:
-    # Columnas por defecto si la colección está vacía
-    columnas = ["MES", "NOMBRE_PUNTO", "ESTADO", "VALOR"]
+# Aquí puedes alimentar la lista de desarrolladores
+dict_desarrolladores = ["Andrés Vanegas", "Laura García", "Carlos Ruiz"]
 
-# 3. Crear el Formulario
-with st.form("formulario_registro", clear_on_submit=True):
-    inputs = {}
-    
-    for col in columnas:
-        # Personalización lógica según tus reglas guardadas:
-        if col == "MES":
-            inputs[col] = st.text_input(f"{col} (Nombre del mes)")
-        elif col == "ESTADO":
-            # Aplicando lógica de chulos (-1) y x (vacío)
-            inputs[col] = st.selectbox(f"{col}", options=["-1", ""], help="-1 para Positivo, Vacío para Déficit")
-        else:
-            inputs[col] = st.text_input(f"{col}")
+# --- FUNCIONES DE LÓGICA ---
+def obtener_siguiente_id():
+    ultimo_registro = visitas_col.find_one(sort=[("Id", -1)])
+    if ultimo_registro and "Id" in ultimo_registro:
+        return int(ultimo_registro["Id"]) + 1
+    return 1
 
-    submit_button = st.form_submit_button("Enviar a MongoDB")
+# --- INTERFAZ DEL FORMULARIO ---
+st.title("📍 Nuevo Punto")
+st.markdown("##### Complete los detalles del punto de venta")
 
-# 4. Lógica de inserción
-if submit_button:
-    try:
-        # Insertar en la colección
-        visitas_col.insert_one(inputs)
-        st.success("✅ Registro guardado exitosamente en la colección 'Puntos de Venta'.")
-    except Exception as e:
-        st.error(f"❌ Error al guardar: {e}")
+with st.form("form_ios"):
+    # 1. ID CONSECUTIVO (Automático)
+    proximo_id = obtener_siguiente_id()
+    st.text_input("🆔 ID de Registro", value=proximo_id, disabled=True)
 
-# 5. Vista previa de datos (Opcional)
-if st.checkbox("Mostrar últimos registros"):
-    data = list(visitas_col.find().limit(10))
-    if data:
-        df = pd.DataFrame(data).drop(columns=['_id'], errors='ignore')
-        st.dataframe(df)
+    # 2. DESARROLLADOR (Diccionario)
+    desarrollador = st.selectbox("👨‍💻 Desarrollador", options=dict_desarrolladores)
+
+    # 3. CIUDAD Y DEPARTAMENTO (Lógica encadenada)
+    ciudad = st.selectbox("🏙️ Ciudad", options=list(dict_ubicaciones.keys()))
+    departamento = st.text_input("🗺️ Departamento", value=dict_ubicaciones[ciudad], disabled=True)
+
+    # 4. DIRECCIÓN Y UBICACIÓN
+    direccion = st.text_input("🏠 Dirección Cercana", placeholder="Ej: Calle 100 #15-20")
+    coordenadas = st.text_input("📍 Ubicación (Coordenadas)", placeholder="Latitud, Longitud")
+
+    # 5. ESTADO (Botones segmentados)
+    st.write("🔘 **Estado**")
+    estado = st.radio("", ["Habilitado", "Deshabilitado"], horizontal=True, label_visibility="collapsed")
+
+    # 6. MES (Basado en tu regla previa de formato texto)
+    mes_actual = datetime.now().strftime("%B").capitalize()
+    mes = st.text_input("📅 Mes", value=mes_actual)
+
+    # BOTÓN DE ACCIÓN
+    submitted = st.form_submit_button("Guardar Registro")
+
+    if submitted:
+        nuevo_punto = {
+            "Id": proximo_id,
+            "Desarrollador": desarrollador,
+            "Ciudad": ciudad,
+            "Departamento": departamento,
+            "Direccion": direccion,
+            "Ubicacion": coordenadas,
+            "Estado": estado,
+            "MES": mes,
+            "Timestamp": datetime.now()
+        }
+        
+        try:
+            visitas_col.insert_one(nuevo_punto)
+            st.success("✅ ¡Punto registrado con éxito!")
+            st.balloons()
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
+
+# Footer minimalista
+st.markdown("<p style='text-align: center; color: #8E8E93; font-size: 0.8rem;'>Power Trade | App Interna 2026</p>", unsafe_allow_html=True)
