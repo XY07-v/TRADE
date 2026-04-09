@@ -2,21 +2,22 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Acceso Power Trade</title>
+    <title>Login | Power Trade</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #F2F2F7; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 300px; text-align: center; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: none; background: #F2F2F7; border-radius: 12px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background: #007AFF; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .login-card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 85%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 15px 0; border: none; background: #F2F2F7; border-radius: 12px; font-size: 16px; box-sizing: border-box; text-align: center; }
+        button { width: 100%; padding: 15px; background: #007AFF; color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; }
         .error { color: #FF3B30; font-size: 13px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h2>Bienvenido</h2>
+        <h2 style="margin-bottom: 5px;">Power Trade</h2>
+        <p style="color: #8e8e93; margin-top: 0;">Ingresa tu cédula</p>
         <form method="POST">
-            <input type="number" name="cc" placeholder="Número de Cédula" required>
-            <button type="submit">Entrar</button>
+            <input type="number" name="cc" placeholder="00000000" required autofocus>
+            <button type="submit">Iniciar Sesión</button>
         </form>
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
     </div>
