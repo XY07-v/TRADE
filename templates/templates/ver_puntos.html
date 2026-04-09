@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Consulta de Puntos</h3>
+<div class="card">
+    <input type="text" id="q_puntos" placeholder="Buscar por Nombre o BMB...">
+    <button class="btn-blue" onclick="buscarPuntos()">Consultar Punto</button>
+</div>
+
+<div id="lista_puntos">
+    </div>
+
+<script>
+    async function buscarPuntos() {
+        const query = document.getElementById('q_puntos').value;
+        if (query.length < 2) return alert("Escribe al menos 2 caracteres");
+
+        const r = await fetch(`/api/buscar?q=${query}`);
+        const data = await r.json();
+        const div = document.getElementById('lista_puntos');
+        div.innerHTML = "";
+
+        if (data.length === 0) {
+            div.innerHTML = "<p style='text-align:center;'>No se encontraron resultados</p>";
+            return;
+        }
+
+        data.forEach(p => {
+            const card = document.createElement('div');
+            card.className = "card";
+            card.innerHTML = `
+                <b style="color:#007AFF;">${p.BMB}</b> - <b>${p['Nombre de punto']}</b><br>
+                <small>📍 ${p.Ciudad || 'Sin Ciudad'} | ${p.Direccion || 'Sin Dirección'}</small>
+            `;
+            div.appendChild(card);
+        });
+    }
+</script>
+{% endblock %}
