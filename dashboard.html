@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
+    .btn-tab { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #ddd; font-weight: bold; }
+    .btn-tab.active { background: var(--blue); color: white; }
+    .scroll-x { overflow-x: auto; background: white; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #f8f9fa; text-transform: uppercase; color: #666; }
+</style>
+
+<div class="btn-group">
+    <button id="btnPuntos" class="btn-tab active" onclick="setTab('puntos')">🏢 PUNTOS</button>
+    <button id="btnVisitas" class="btn-tab" onclick="setTab('visitas')">📊 VISITAS</button>
+</div>
+
+<div class="card">
+    <input type="text" id="buscador" placeholder="Buscar en esta colección..." onkeyup="consultar()">
+    <button class="btn-blue" style="margin-top:10px;" onclick="abrirModal()">+ INYECTAR NUEVO</button>
+</div>
+
+<div class="scroll-x">
+    <table id="tablaDatos">
+        <thead id="cabecera"></thead>
+        <tbody id="cuerpo"></tbody>
+    </table>
+</div>
+
+<script>
+let tActual = 'puntos';
+
+function setTab(t) {
+    tActual = t;
+    document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById(t == 'puntos' ? 'btnPuntos' : 'btnVisitas').classList.add('active');
+    consultar();
+}
+
+async function consultar() {
+    const q = document.getElementById('buscador').value;
+    const r = await fetch(`/api/consultar?col=${tActual}&q=${q}`);
+    const data = await r.json();
+    
+    const cab = document.getElementById('cabecera');
+    const cue = document.getElementById('cuerpo');
+    cab.innerHTML = ""; cue.innerHTML = "";
+
+    if(data.length > 0) {
+        // Generar cabeceras dinámicas basadas en las llaves del primer documento
+        let columnas = Object.keys(data[0]).filter(k => k !== '_id');
+        let trHead = "<tr>";
+        columnas.forEach(c => trHead += `<th>${c}</th>`);
+        cab.innerHTML = trHead + "</tr>";
+
+        // Generar filas
+        data.forEach(item => {
+            let trBody = "<tr>";
+            columnas.forEach(c => trBody += `<td>${item[c] || ''}</td>`);
+            cue.innerHTML += trBody + "</tr>";
+        });
+    } else {
+        cue.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No hay datos</td></tr>";
+    }
+}
+
+function abrirModal() {
+    let nom = prompt("Nombre del Punto:");
+    let bmb = prompt("BMB:");
+    if(!nom || !bmb) return;
+
+    if(tActual === 'puntos') {
+        inyectarPunto(nom, bmb);
+    } else {
+        alert("Para inyectar visitas usa el módulo de Registrar con Fotos.");
+    }
+}
+
+async function inyectarPunto(n, b) {
+    const fd = new FormData();
+    fd.append('target', 'punto');
+    fd.append('Nombre', n);
+    fd.append('BMB', b);
+    fd.append('GPS', '0,0'); // Aquí puedes capturar el GPS real
+    await fetch('/api/inyectar', {method:'POST', body:fd});
+    consultar();
+}
+
+// Carga inicial
+window.onload = consultar;
+</script>
+{% endblock %}
