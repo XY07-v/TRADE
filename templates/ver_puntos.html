@@ -1,18 +1,51 @@
 {% extends "layout.html" %}
 {% block content %}
-<h3>Listado de Puntos</h3>
+<h3>Listado de Puntos Registrados</h3>
+
 <div class="card">
-    <input type="text" id="q" placeholder="BMB o Nombre...">
-    <button class="btn-blue" onclick="buscar()">Buscar</button>
+    <div style="display: flex; gap: 5px;">
+        <input type="text" id="q" placeholder="BMB o Nombre de punto..." style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+        <button class="btn-blue" style="width: 80px;" onclick="buscar()">Buscar</button>
+    </div>
 </div>
+
 <div id="res"></div>
+
 <script>
+    // Ejecutar búsqueda al cargar la página para mostrar algo inicialmente
+    window.onload = () => buscar();
+
     async function buscar() {
-        const r = await fetch(`/api/buscar?q=${document.getElementById('q').value}`);
+        const query = document.getElementById('q').value;
+        const r = await fetch(`/api/buscar?q=${query}`);
         const data = await r.json();
-        const div = document.getElementById('res'); div.innerHTML = "";
+        const div = document.getElementById('res'); 
+        div.innerHTML = "";
+
+        if(data.length === 0) {
+            div.innerHTML = '<div class="card" style="text-align:center; color:#888;">No se encontraron puntos.</div>';
+            return;
+        }
+
         data.forEach(p => {
-            div.innerHTML += `<div class="card"><b>${p.BMB}</b> - ${p['Nombre de punto']}</div>`;
+            let card = document.createElement('div');
+            card.className = "card";
+            card.style.borderLeft = "5px solid #0056b3";
+
+            // Título principal
+            let contenido = `<div style="margin-bottom:8px;"><b style="font-size:16px; color:#0056b3;">${p['Nombre de punto']}</b></div>`;
+            contenido += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; font-size:13px;">`;
+            
+            // Iterar por todos los campos dinámicamente
+            Object.keys(p).forEach(key => {
+                if(key !== '_id' && key !== 'Nombre de punto' && p[key]) {
+                    contenido += `<div><span style="color:#777;">${key}:</span> <b>${p[key]}</b></div>`;
+                }
+            });
+
+            contenido += `</div>`;
+            card.innerHTML = contenido;
+            div.appendChild(card);
         });
     }
 </script>
