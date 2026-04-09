@@ -4,26 +4,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --blue: #007AFF; --bg: #F2F2F7; --red: #FF3B30; --green: #34C759; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
         .nav-top { background: white; padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; }
         .container { padding: 15px; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tabs { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 60px; border-top: 1px solid #ddd; }
         .tab { flex: 1; text-align: center; font-size: 11px; padding-top: 10px; color: #8e8e93; text-decoration: none; }
-        .tab.active { color: var(--blue); }
-        input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: none; font-size: 15px; box-sizing: border-box; }
-        .btn-blue { background: var(--blue); color: white; font-weight: 600; }
+        input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
+        .btn-blue { background: var(--blue); color: white; border: none; font-weight: 600; }
     </style>
-    {% block head %}{% endblock %}
 </head>
 <body>
-    <div class="nav-top">
-        <b>Power Trade</b>
-        <a href="/logout" style="color:var(--red); text-decoration:none; font-size:12px;">Salir</a>
-    </div>
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+    <div class="nav-top"><b>Power Trade</b> <a href="/logout" style="color:var(--red); text-decoration:none;">Salir</a></div>
+    <div class="container">{% block content %}{% endblock %}</div>
     <div class="tabs">
         <a href="/" class="tab">📊 Visitas</a>
         <a href="/nueva_visita" class="tab">📝 Registrar</a>
