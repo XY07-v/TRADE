@@ -1,8 +1,9 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from pymongo import MongoClient
 
 app = Flask(__name__)
+app.secret_key = "power_trade_secret_key" # Cambia esto por algo seguro
 
 # Conexión a MongoDB
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
@@ -10,33 +11,65 @@ client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
 visitas_col = db['Puntos de Venta']
 
+# DICCIONARIO DE USUARIOS (Cédula: Nombre)
+USUARIOS = {
+    "12345678": "Andrés Vanegas",
+    "87654321": "Admin Power",
+    "10102020": "Soporte Técnico"
+}
+
 @app.route('/')
+def root():
+    if 'usuario' in session:
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        cc = request.form.get('cc')
+        if cc in USUARIOS:
+            session['usuario'] = USUARIOS[cc]
+            return redirect(url_for('index'))
+        return render_template('login.html', error="Cédula no registrada")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('usuario', None)
+    return redirect(url_for('login'))
+
+@app.route('/index')
 def index():
-    # Obtener el consecutivo Id
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
     ultimo = visitas_col.find_one(sort=[("Id", -1)])
     next_id = (int(ultimo["Id"]) + 1) if ultimo and "Id" in ultimo else 1
     
-    # Obtener todas las columnas actuales de la BD para mantener el orden
-    sample_doc = visitas_col.find_one()
-    if sample_doc:
-        columnas = [k for k in sample_doc.keys() if k not in ['_id', 'MES', 'Fecha', 'Fecha_Sistema']]
-    else:
-        # Estructura base si no hay datos
-        columnas = ["Id", "Nombre de punto", "Direccion", "Ubicacion", "Ciudad", "Departamento", "Desarrollador", "Estado", "Rango"]
+    # Columnas base a mostrar
+    columnas = ["Id", "BMB", "Nombre de punto", "Direccion", "Ubicacion", "Ciudad", "Departamento", "Desarrollador", "Estado", "Rango"]
     
-    # Asegurar que 'Nombre de punto' esté en la lista si no existe aún en la estructura
-    if "Nombre de punto" not in columnas:
-        columnas.insert(1, "Nombre de punto")
-
-    return render_template('index.html', next_id=next_id, columnas=columnas)
+    return render_template('index.html', next_id=next_id, columnas=columnas, usuario=session['usuario'])
 
 @app.route('/guardar', methods=['POST'])
 def guardar():
+    if 'usuario' not in session:
+        return jsonify({"status": "error", "message": "Sesión expirada"}), 401
+        
     try:
         data = request.json
-        # Guardar en MongoDB tal cual viene del formulario
+        
+        # VALIDACIÓN: ¿Existe BMB?
+        if visitas_col.find_one({"BMB": data['BMB']}):
+            return jsonify({"status": "error", "message": f"El BMB {data['BMB']} ya existe"}), 400
+            
+        # VALIDACIÓN: ¿Existe Nombre de Punto?
+        if visitas_col.find_one({"Nombre de punto": data['Nombre de punto']}):
+            return jsonify({"status": "error", "message": f"El punto '{data['Nombre de punto']}' ya existe"}), 400
+        
         visitas_col.insert_one(data)
-        return jsonify({"status": "success", "message": "Punto registrado correctamente"})
+        return jsonify({"status": "success", "message": "Punto registrado con éxito"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
