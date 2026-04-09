@@ -26,7 +26,7 @@ DATOS_MAESTROS = [
         "Poc": "Almacen Central", 
         "BMB": "BMB-2020", 
         "Direccion": "Carrera 15 #40-10", 
-        "Ubicacion_Ref": "6.2442, -75.5812", 
+        "Ubicacion_Ref": "4.6097, -74.0817", 
         "Ciudad": "Medellín", 
         "Departamento": "Antioquia"
     }
