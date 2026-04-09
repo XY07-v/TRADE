@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.secret_key = "power_trade_ultra_2026"
 
 # --- CONFIGURACIÓN DE CONEXIÓN ---
+# Se utiliza la URI de MongoDB proporcionada
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://ANDRES_VANEGAS:CF32fUhOhrj70dY5@cluster0.dtureen.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client['POWER_TRADE']
@@ -33,18 +34,18 @@ def calcular_distancia(c1, c2):
     except:
         return 0
 
-# --- VISTAS (PÁGINAS) ---
+# --- VISTAS PRINCIPALES (PÁGINAS HTML) ---
 
 @app.route('/')
 def index():
-    """Página de Historial de Visitas."""
+    """Historial de Visitas (Página principal)."""
     if 'usuario' not in session: return redirect(url_for('login'))
     datos = list(visitas_col.find().sort("fecha", -1).limit(50))
     return render_template('ver_visitas.html', datos=datos)
 
 @app.route('/nueva_visita')
 def nueva_visita():
-    """Formulario para registrar visita a un punto existente."""
+    """Formulario para reportar visita con fotos y motivo."""
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('nueva_visita.html')
 
@@ -56,7 +57,7 @@ def nuevo_punto():
 
 @app.route('/ver_puntos')
 def ver_puntos():
-    """Listado de puntos registrados."""
+    """Listado de puntos de venta registrados."""
     if 'usuario' not in session: return redirect(url_for('login'))
     return render_template('ver_puntos.html')
 
@@ -105,11 +106,11 @@ def filtrar_historial():
     visitas = list(visitas_col.find(query, {"_id": 0}).sort("fecha", -1).limit(100))
     return jsonify(visitas)
 
-# --- APIs DE GUARDADO ---
+# --- APIs DE GUARDADO (POST) ---
 
 @app.route('/api/guardar_visita', methods=['POST'])
 def guardar_v():
-    """Guarda una visita con fotos y motivo."""
+    """Guarda una visita incluyendo imágenes en Base64 y el motivo seleccionado."""
     if 'usuario' not in session: return jsonify({"status":"error", "msg":"Sesión expirada"}), 401
     
     data = request.form
@@ -119,7 +120,6 @@ def guardar_v():
     if not f_maquina or not f_fachada:
         return jsonify({"status":"error", "msg":"Fotos obligatorias faltantes"}), 400
 
-    # Crear documento
     doc = {
         "Nombre de punto": data.get('Nombre de punto'),
         "BMB": data.get('BMB'),
@@ -133,7 +133,7 @@ def guardar_v():
         "distancia_real": calcular_distancia(data.get('ubicacion_punto'), data.get('ubicacion_actual'))
     }
 
-    # Procesar imágenes a Base64 para MongoDB
+    # Procesamiento de imágenes (Lectura y codificación)
     doc['foto_maquina'] = f"data:{f_maquina.content_type};base64,{base64.b64encode(f_maquina.read()).decode()}"
     doc['foto_fachada'] = f"data:{f_fachada.content_type};base64,{base64.b64encode(f_fachada.read()).decode()}"
 
@@ -142,44 +142,45 @@ def guardar_v():
 
 @app.route('/api/guardar_punto', methods=['POST'])
 def guardar_p():
-    """Registra un nuevo punto de venta en la base de datos."""
+    """Registra un nuevo punto de venta."""
     if 'usuario' not in session: return jsonify({"status":"error"}), 401
     data = request.json
     data['fecha_creacion'] = datetime.now().strftime("%Y-%m-%d")
     puntos_col.insert_one(data)
     return jsonify({"status":"ok"})
 
-# --- EXPORTACIÓN ---
+# --- EXPORTACIÓN Y DESCARGAS ---
 
 @app.route('/descargar')
 def descargar():
-    """Genera reporte Excel basado en rango de fechas."""
+    """Genera reporte Excel filtrado por fechas."""
     ini = request.args.get('ini')
     fin = request.args.get('fin')
     
     query = {"fecha": {"$gte": ini, "$lte": fin}}
     visitas = list(visitas_col.find(query, {"_id":0}))
     
-    if not visitas: return "No hay datos en este rango", 404
+    if not visitas: return "No hay datos para el rango seleccionado", 404
     
     df = pd.DataFrame(visitas)
-    # Eliminar columnas de base64 para que el Excel no pese gigas
+    
+    # Limpieza: No exportamos las imágenes pesadas al Excel
     if 'foto_maquina' in df.columns: df.drop(columns=['foto_maquina'], inplace=True)
     if 'foto_fachada' in df.columns: df.drop(columns=['foto_fachada'], inplace=True)
     
     out = BytesIO()
     with pd.ExcelWriter(out, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Visitas')
+        df.to_excel(writer, index=False, sheet_name='Reporte de Visitas')
     out.seek(0)
     
     return send_file(
         out, 
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
-        download_name=f"Reporte_{ini}_al_{fin}.xlsx", 
+        download_name=f"Reporte_PowerTrade_{ini}.xlsx", 
         as_attachment=True
     )
 
 if __name__ == '__main__':
-    # Configuración para despliegue (ej. Render o Heroku)
+    # Configuración de puerto para despliegue
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
