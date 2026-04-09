@@ -1,21 +1,130 @@
 {% extends "layout.html" %}
+
 {% block content %}
-<h3>Historial de Visitas</h3>
-<div class="card">
-    <input type="date" id="ini"> <input type="date" id="fin">
-    <button class="btn-blue" style="background:var(--green);" onclick="descargar()">Excel</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="margin:0;">Historial de Visitas</h3>
+    <button class="btn-blue" style="background:var(--green); width: auto; padding: 10px 15px; font-size: 13px;" onclick="toggleDescarga()">
+        📥 Bajar Excel
+    </button>
 </div>
-{% for v in datos %}
-<div class="card" style="border-left:5px solid {{ 'var(--red)' if v.distancia_real > 200 else 'var(--green)' }}">
-    <b>{{ v['Nombre de punto'] }}</b><br>
-    <small>{{ v.fecha }} | {{ v.distancia_real }}m</small>
+
+<div id="seccion-descarga" class="card" style="display:none; border: 1px solid var(--green); background: #f0fff4;">
+    <p style="margin-top:0; font-weight:bold; color:var(--green);">Exportar Reporte Excel</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label style="font-size:11px;">Desde:</label>
+            <input type="date" id="d_ini">
+        </div>
+        <div>
+            <label style="font-size:11px;">Hasta:</label>
+            <input type="date" id="d_fin">
+        </div>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-blue" style="background:var(--green);" onclick="ejecutarDescarga()">Descargar</button>
+        <button class="btn-blue" style="background:#888;" onclick="toggleDescarga()">Cancelar</button>
+    </div>
 </div>
-{% endfor %}
+
+<div class="card" style="border-top: 3px solid var(--blue);">
+    <p style="margin-top:0; font-size:13px; font-weight:bold;">🔍 Consultar Registros</p>
+    <input type="text" id="q_historial" placeholder="Nombre de punto o BMB...">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:5px;">
+        <input type="date" id="f_filtro_ini">
+        <input type="date" id="f_filtro_fin">
+    </div>
+    
+    <button class="btn-blue" style="margin-top:10px;" onclick="filtrarHistorial()">
+        Realizar Consulta
+    </button>
+</div>
+
+<div id="contenedor-historial">
+    {% for v in datos %}
+    <div class="card" style="border-left:5px solid {{ 'var(--red)' if v.distancia_real > 200 else 'var(--green)' }}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <b style="font-size: 15px;">{{ v['Nombre de punto'] }}</b>
+            <span style="font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 5px; color: #666;">
+                {{ v.fecha }}
+            </span>
+        </div>
+        <div style="margin-top: 5px; font-size: 13px; color: #555;">
+            BMB: <b>{{ v.BMB }}</b> | Distancia: <b>{{ v.distancia_real }}m</b>
+        </div>
+        {% if v.observacion %}
+        <div style="margin-top: 8px; font-size: 12px; color: #777; border-top: 1px solid #f9f9f9; padding-top: 5px;">
+            <i>Obs: {{ v.observacion }}</i>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
 <script>
-    function descargar() {
-        const i = document.getElementById('ini').value;
-        const f = document.getElementById('fin').value;
-        if(i && f) window.location.href = `/descargar?ini=${i}&fin=${f}`;
+    // Mostrar/Ocultar el panel de descarga
+    function toggleDescarga() {
+        const div = document.getElementById('seccion-descarga');
+        div.style.display = (div.style.display === 'none') ? 'block' : 'none';
+    }
+
+    // Ejecuta la descarga abriendo el link con parámetros de fecha
+    function ejecutarDescarga() {
+        const i = document.getElementById('d_ini').value;
+        const f = document.getElementById('d_fin').value;
+        if(!i || !f) {
+            alert("Selecciona el rango de fechas para el Excel.");
+            return;
+        }
+        window.location.href = `/descargar?ini=${i}&fin=${f}`;
+        toggleDescarga();
+    }
+
+    // Consulta la API para traer datos filtrados sin recargar la página
+    async function filtrarHistorial() {
+        const q = document.getElementById('q_historial').value;
+        const ini = document.getElementById('f_filtro_ini').value;
+        const fin = document.getElementById('f_filtro_fin').value;
+        
+        const btn = event.target;
+        btn.innerText = "Consultando...";
+        btn.disabled = true;
+
+        const params = new URLSearchParams({ q, ini, fin });
+        try {
+            const r = await fetch(`/api/filtrar_historial?${params.toString()}`);
+            const data = await r.json();
+            
+            const div = document.getElementById('contenedor-historial');
+            div.innerHTML = "";
+
+            if(data.length === 0) {
+                div.innerHTML = '<div class="card" style="text-align:center; color:#888;">No se encontraron registros.</div>';
+            } else {
+                data.forEach(v => {
+                    const color = v.distancia_real > 200 ? 'var(--red)' : 'var(--green)';
+                    div.innerHTML += `
+                        <div class="card" style="border-left:5px solid ${color}">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <b style="font-size: 15px;">${v['Nombre de punto']}</b>
+                                <span style="font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 5px; color: #666;">
+                                    ${v.fecha}
+                                </span>
+                            </div>
+                            <div style="margin-top: 5px; font-size: 13px; color: #555;">
+                                BMB: <b>${v.BMB}</b> | Distancia: <b>${v.distancia_real}m</b>
+                            </div>
+                            ${v.observacion ? `<div style="margin-top: 8px; font-size: 12px; color: #777; border-top: 1px solid #f9f9f9; padding-top: 5px;"><i>Obs: ${v.observacion}</i></div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+        } catch (e) {
+            alert("Error en la consulta");
+        } finally {
+            btn.innerText = "Realizar Consulta";
+            btn.disabled = false;
+        }
     }
 </script>
 {% endblock %}
