@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Power Trade App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 pb-24">
+    <header class="bg-blue-900 text-white p-4 text-center sticky top-0 z-50 shadow-md">
+        <h1 class="font-black italic uppercase">Power Trade</h1>
+    </header>
+
+    <main class="p-4 max-w-md mx-auto">
+        {% block content %}{% endblock %}
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
+        <a href="/" class="text-center">
+            <span class="block text-xl">📝</span>
+            <span class="text-[10px] font-bold uppercase text-slate-500">Registro</span>
+        </a>
+        <a href="/registros" class="text-center">
+            <span class="block text-xl">🖼️</span>
+            <span class="text-[10px] font-bold uppercase text-slate-500">Historial</span>
+        </a>
+    </nav>
+</body>
+</html>
