@@ -19,59 +19,55 @@ db = client['POWER_TRADE']
 fs = gridfs.GridFS(db) 
 coleccion_visitas = db['Visitas_a_POC']
 
-# --- CONFIGURACIÓN DE FORMULARIOS (Aquí ajustas tus preguntas) ---
+# --- CONFIGURACIÓN DE FORMULARIOS DINÁMICOS ---
 CONFIG_FORMULARIOS = {
     "prospecciones": {
         "titulo": "Registro de Prospecto",
         "icono": "fa-magnifying-glass-location",
         "preguntas": [
             {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
-            {"id": "contacto", "label": "Nombre del Propietario / Encargado", "type": "text", "required": True},
-            {"id": "telefono", "label": "Teléfono de Contacto", "type": "number", "required": True},
-            {"id": "direccion", "label": "Dirección Exacta", "type": "text", "required": True},
-            {"id": "potencial", "label": "Potencial del Punto", "type": "select", "options": ["Bajo", "Medio", "Alto"], "required": True},
-            {"id": "productos", "label": "Productos Interesados", "type": "multiselect", "options": ["Nescafe Alegria Cappuccino 4 X 1 Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco"], "required": True},
-            {"id": "competencia", "label": "¿Tiene competencia instalada?", "type": "select", "options": ["Ninguna", "BetPlay", "Wplay", "Rushbet", "Otras"], "required": False},
-            {"id": "observaciones", "label": "Notas de la Prospección", "type": "textarea", "required": False}
+            {"id": "contacto", "label": "Nombre Propietario", "type": "text", "required": True},
+            {"id": "telefono", "label": "Teléfono", "type": "number", "required": True},
+            {"id": "direccion", "label": "Dirección", "type": "text", "required": True},
+            {"id": "potencial", "label": "Potencial", "type": "select", "options": ["Bajo", "Medio", "Alto"], "required": True},
+            {"id": "productos", "label": "Productos", "type": "multiselect", "options": ["Nescafe Alegria Cappuccino 4 X 1 Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco", "Milo Granulado", "Leche Nestlé"], "required": True},
+            {"id": "competencia", "label": "¿Tiene competencia?", "type": "select", "options": ["Ninguna", "BetPlay", "Wplay", "Otras"], "required": False},
+            {"id": "observaciones", "label": "Notas", "type": "textarea", "required": False}
         ]
     },
     "leads": {
-        "titulo": "Gestión de Leads",
-        "icono": "fa-user-tie",
+        "titulo": "Gestión de Leads", "icono": "fa-user-tie",
         "preguntas": [
             {"id": "cliente", "label": "Nombre Cliente", "type": "text", "required": True},
-            {"id": "interes", "label": "Producto de Interés", "type": "multiselect", "options": ["Máquina Café", "Insumos", "Mantenimiento"], "required": True},
-            {"id": "estado", "label": "Estado del Lead", "type": "select", "options": ["Nuevo", "En Seguimiento", "Cerrado"], "required": True}
+            {"id": "interes", "label": "Interés", "type": "multiselect", "options": ["Máquina Café", "Insumos", "Soporte"], "required": True},
+            {"id": "estado", "label": "Estado", "type": "select", "options": ["Nuevo", "Seguimiento", "Cerrado"], "required": True}
         ]
     },
     "food": {
-        "titulo": "Food Service",
-        "icono": "fa-utensils",
+        "titulo": "Food Service", "icono": "fa-utensils",
         "preguntas": [
-            {"id": "lugar", "label": "Restaurante/Hotel", "type": "text", "required": True},
-            {"id": "consumo", "label": "Insumos requeridos", "type": "multiselect", "options": ["Café Molido", "Leche Polvo", "Chocolate"], "required": True}
+            {"id": "lugar", "label": "Establecimiento", "type": "text", "required": True},
+            {"id": "categoria", "label": "Categoría", "type": "select", "options": ["Gourmet", "Rápida", "Hotel"], "required": True}
         ]
     },
     "competencias": {
-        "titulo": "Análisis Competencia",
-        "icono": "fa-handshake-slash",
+        "titulo": "Competencia", "icono": "fa-handshake-slash",
         "preguntas": [
             {"id": "marca", "label": "Marca Competidora", "type": "text", "required": True},
-            {"id": "ventaja", "label": "Ventaja Observada", "type": "textarea", "required": False}
+            {"id": "modelo", "label": "Modelo", "type": "select", "options": ["Venta", "Comodato"], "required": True}
         ]
     },
     "ingredientes": {
-        "titulo": "Control Ingredientes",
-        "icono": "fa-jar",
+        "titulo": "Insumos e Ingredientes", "icono": "fa-jar",
         "preguntas": [
             {"id": "item", "label": "Ingrediente", "type": "text", "required": True},
-            {"id": "alerta", "label": "Estado", "type": "select", "options": ["Suficiente", "Pedido Pendiente", "Agotado"], "required": True}
+            {"id": "stock", "label": "Estado", "type": "select", "options": ["Ok", "Bajo", "Agotado"], "required": True}
         ]
     }
 }
 
 # --- DATOS MAESTROS ---
-FUNCIONARIOS = sorted(["ANDRES VANEGAS", "CINDY BOCANEGRA", "KEVIN MARIN", "MAURICIO LADINO", "MONICA PATIÑO"]) # ... Agrega todos
+FUNCIONARIOS = sorted(["ANDRES VANEGAS", "CINDY BOCANEGRA", "KEVIN MARIN", "MAURICIO LADINO", "MONICA PATIÑO"])
 TABLA_PUNTOS = [["Tienda El Porvenir", "BMB-1010", "4.6097, -74.0817"]]
 DATOS_MAESTROS = [{"Poc": f[0], "BMB": f[1], "Ubicacion_Ref": f[2]} for f in TABLA_PUNTOS]
 
@@ -88,12 +84,7 @@ def index():
 def render_form_dinamico(tipo):
     if tipo not in CONFIG_FORMULARIOS: return "Error", 404
     config = CONFIG_FORMULARIOS[tipo]
-    return render_template('prospecciones.html', 
-                           funcionarios=FUNCIONARIOS, 
-                           preguntas=config['preguntas'], 
-                           titulo=config['titulo'], 
-                           icono=config['icono'],
-                           tipo_url=tipo)
+    return render_template('prospecciones.html', funcionarios=FUNCIONARIOS, preguntas=config['preguntas'], titulo=config['titulo'], icono=config['icono'], tipo_url=tipo)
 
 @app.route('/guardar_dinamico/<tipo>', methods=['POST'])
 def guardar_dinamico(tipo):
@@ -106,23 +97,25 @@ def guardar_dinamico(tipo):
 
 @app.route('/guardar_visita', methods=['POST'])
 def guardar_visita():
-    f1 = fs.put(request.files['foto_maquina'], filename="maquina.jpg")
-    f2 = fs.put(request.files['foto_fachada'], filename="fachada.jpg")
-    ahora = get_colombia_time()
-    doc = {
-        "funcionario": request.form.get('funcionario'),
-        "poc": request.form.get('poc'),
-        "bmb": request.form.get('bmb'),
-        "gps_real": request.form.get('gps_real'),
-        "distancia_mts": request.form.get('distancia_metros'),
-        "motivo": request.form.get('motivo'),
-        "observacion": request.form.get('observacion'),
-        "foto_maquina_id": str(f1),
-        "foto_fachada_id": str(f2),
-        "fecha": ahora.strftime("%Y-%m-%d %H:%M:%S")
-    }
-    coleccion_visitas.insert_one(doc)
-    return redirect(url_for('index'))
+    try:
+        f1 = fs.put(request.files['foto_maquina'], filename="maquina.jpg")
+        f2 = fs.put(request.files['foto_fachada'], filename="fachada.jpg")
+        ahora = get_colombia_time()
+        doc = {
+            "funcionario": request.form.get('funcionario'),
+            "poc": request.form.get('poc'),
+            "bmb": request.form.get('bmb'),
+            "gps_real": request.form.get('gps_real'),
+            "distancia_mts": request.form.get('distancia_metros'),
+            "motivo": request.form.get('motivo'),
+            "observacion": request.form.get('observacion'),
+            "foto_maquina_id": str(f1),
+            "foto_fachada_id": str(f2),
+            "fecha": ahora.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        coleccion_visitas.insert_one(doc)
+        return redirect(url_for('ver_registros', f_inicio=ahora.strftime("%Y-%m-%d"), f_fin=ahora.strftime("%Y-%m-%d")))
+    except Exception as e: return f"Error: {e}", 500
 
 @app.route('/registros')
 def ver_registros():
@@ -134,6 +127,22 @@ def ver_registros():
         query["$or"] = [{"poc": {"$regex": busqueda, "$options": "i"}}, {"bmb": {"$regex": busqueda, "$options": "i"}}]
     registros = list(coleccion_visitas.find(query).sort("fecha", -1))
     return render_template('registros.html', registros=registros, f_inicio=f_inicio, f_fin=f_fin, busqueda=busqueda)
+
+@app.route('/descargar_excel')
+def descargar_excel():
+    f_inicio = request.args.get('f_inicio')
+    f_fin = request.args.get('f_fin')
+    query = {"fecha": {"$gte": f"{f_inicio} 00:00:00", "$lte": f"{f_fin} 23:59:59"}}
+    datos = list(coleccion_visitas.find(query))
+    if not datos: return "No hay datos", 404
+    df = pd.DataFrame(datos)
+    for col in ['_id', 'foto_maquina_id', 'foto_fachada_id']:
+        if col in df.columns: del df[col]
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    output.seek(0)
+    return send_file(output, as_attachment=True, download_name=f"PowerTrade_{f_inicio}.xlsx")
 
 @app.route('/foto/<foto_id>')
 def servir_foto(foto_id):
