@@ -48,8 +48,8 @@ CONFIG_FORMULARIOS = {
 
               "Milo Granulado", "Leche Nestlé"], "required": True},
             
-            {"id": "Venta Efectiva", "label": "Venta Efectiva", "type": "select", "options": ["Si", "No"], "required": False},
-            {"id": "Seguimiento", "label": "Seguimiento", "type": "select", "options": ["Si", "No"], "required": False},
+            {"id": "Venta Efectiva", "label": "Venta Efectiva", "type": "select", "options": ["Si", "No"], "required": True},
+            {"id": "Seguimiento", "label": "Seguimiento", "type": "select", "options": ["Si", "No"], "required": True},
             {"id": "observaciones", "label": "Notas", "type": "textarea", "required": False}
         ]
     },
@@ -64,8 +64,23 @@ CONFIG_FORMULARIOS = {
     "food": {
         "titulo": "Food Service", "icono": "fa-utensils",
         "preguntas": [
-            {"id": "lugar", "label": "Establecimiento", "type": "text", "required": True},
-            {"id": "categoria", "label": "Categoría", "type": "select", "options": ["Gourmet", "Rápida", "Hotel"], "required": True}
+            {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
+            {"id": "Producto #1", "label": "Categoría", "type": "select", "options": [
+                "Aro - Caldo Desmenuzado 800 Grs",
+"Aro - Caldo gallina 1 Kg",
+"Aro - Base bechamel Aro x 1 Kg",
+"Aro - Leche condesada Aro x 1.3 Kg",
+"Aro - Leche condesada Aro x 3.9 Kg",
+"Aro - Leche condesada Aro x 5 Kg",
+"Bugueña - Leche condensada la bugueña x 1 Kg",
+"Bugueña - Leche condensada la bugueña x 5 Kg",
+"Carreta - Leche condensada la Carreta x 1 Kg",
+"Carreta - Leche condensada la Carreta x 5 Kg",
+"Colombina - Nucita x 1 Kg",
+"Colombina - Nucita x 1.5 Kg"
+            ], "required": True}
+            
+            {"id": "Precio #1", "label": "Categoría",  "type": "text", "required": True},
         ]
     },
     "competencias": {
@@ -103,6 +118,7 @@ def render_form_dinamico(tipo):
     if tipo not in CONFIG_FORMULARIOS: return "Error", 404
     config = CONFIG_FORMULARIOS[tipo]
     return render_template('prospecciones.html', funcionarios=FUNCIONARIOS, preguntas=config['preguntas'], titulo=config['titulo'], icono=config['icono'], tipo_url=tipo)
+
 
 @app.route('/guardar_dinamico/<tipo>', methods=['POST'])
 def guardar_dinamico(tipo):
