@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <form action="/guardar_prospeccion" method="POST" class="bg-white p-8 rounded-[40px] shadow-2xl border border-slate-100 space-y-6">
+        <h2 class="text-blue-900 font-black uppercase text-sm flex items-center gap-3 border-b pb-4">
+            <i class="fa-solid fa-magnifying-glass-plus text-xl"></i> Registro de Prospecto
+        </h2>
+
+        <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Asesor Responsable</label>
+            <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-sm" required>
+                <option value="">Seleccione...</option>
+                {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
+            </select>
+        </div>
+
+        {% for p in preguntas %}
+        <div class="space-y-1">
+            <label class="text-[10px] font-black text-slate-400 uppercase ml-2">{{ p.label }} {% if p.required %}*{% endif %}</label>
+            {% if p.type == 'select' %}
+                <select name="{{ p.id }}" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" {% if p.required %}required{% endif %}>
+                    <option value="">Seleccione...</option>
+                    {% for opt in p.options %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            {% elif p.type == 'textarea' %}
+                <textarea name="{{ p.id }}" rows="3" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" placeholder="..." {% if p.required %}required{% endif %}></textarea>
+            {% else %}
+                <input type="{{ p.type }}" name="{{ p.id }}" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm" placeholder="..." {% if p.required %}required{% endif %}>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="w-full bg-blue-900 text-white font-black py-5 rounded-[30px] uppercase shadow-xl hover:bg-blue-800 transition-all flex items-center justify-center gap-3">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Prospecto
+        </button>
+    </form>
+</div>
+{% endblock %}
