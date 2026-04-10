@@ -1,5 +1,6 @@
-flask
-pymongo
-dnspython
+Flask
+pymongo[srv]
 pandas
-xlsxwriter
+openpyxl
+pytz
+gunicorn
