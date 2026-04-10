@@ -26,9 +26,12 @@ PREGUNTAS_PROSPECCION = [
     {"id": "contacto", "label": "Nombre del Propietario / Encargado", "type": "text", "required": True},
     {"id": "telefono", "label": "Teléfono de Contacto", "type": "number", "required": True},
     {"id": "direccion", "label": "Dirección Exacta", "type": "text", "required": True},
-    {"id": "potencial", "label": "Potencial del Punto", "type": "select", "options": ["Bajo", "Medio", "Alto"], "required": True},
-    {"id": "competencia", "label": "¿Tiene competencia instalada?", "type": "select", "options": ["Ninguna", "BetPlay", "Wplay", "Rushbet", "Otras"], "required": False},
-    {"id": "observaciones", "label": "Notas de la Prospección", "type": "textarea", "required": False}
+    {"id": "Sector", "label": "Potencial del Punto", "type": "select", "options": ["Cafeteria", "Tinteros", "Transporte"], "required": True},
+    {"id": "potencial", "label": "Potencial del Punto", "type": "select", "options": ["Maquina", "Food", "Ambos","No esta interesado"], "required": True},
+    {"id": "Productos", "label": "Productos", "type": "select", "options": ["Nescafe Alegria Cappuccino 4 X 1 Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco","Nescafe Alegria Cappu Vainillanp 4 X 1Kgco"], "required": True},
+    {"id": "Efectividad", "label": "Venta efectiva?", "type": "select", "options": ["Ninguna", "BetPlay", "Wplay", "Rushbet", "Otras"], "required": False},
+    {"id": "Seguimiento", "label": "Queda en seguimiento?", "type": "textarea", "required": False},
+    {"id": "Observaciones", "label": "Observaciones", "type": "textarea", "required": False}
 ]
 
 # --- DATOS MAESTROS ---
