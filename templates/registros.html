@@ -1,35 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="space-y-5">
-    <div class="bg-white p-5 rounded-[30px] shadow-md border border-slate-100">
+    <div class="bg-white p-6 rounded-[35px] shadow-lg border border-slate-100">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-calendar-days text-blue-900"></i>
+            <h3 class="text-xs font-black text-slate-400 uppercase">Consultar Periodo</h3>
+        </div>
         <form action="/registros" method="GET" class="space-y-3">
             <div class="grid grid-cols-2 gap-2">
-                <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-3 bg-slate-50 rounded-xl text-xs border-none" required>
-                <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-3 bg-slate-50 rounded-xl text-xs border-none" required>
+                <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" required>
+                <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" required>
             </div>
-            <button type="submit" class="w-full bg-blue-900 text-white font-black py-3 rounded-xl uppercase text-[10px]">Consultar</button>
+            <button type="submit" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-md hover:bg-blue-800 transition-all">Ver Resultados</button>
         </form>
         {% if registros %}
-        <a href="{{ url_for('descargar_excel', f_inicio=f_inicio, f_fin=f_fin) }}" class="block mt-2 w-full bg-green-600 text-white text-center font-black py-3 rounded-xl uppercase text-[10px]">📥 Descargar Excel</a>
+        <a href="{{ url_for('descargar_excel', f_inicio=f_inicio, f_fin=f_fin) }}" class="block mt-3 w-full bg-green-600 text-white text-center font-black py-4 rounded-2xl uppercase text-[10px] shadow-sm">
+            <i class="fa-solid fa-file-excel mr-1"></i> Exportar a Excel
+        </a>
         {% endif %}
     </div>
 
-    <div class="space-y-4 pb-24">
+    <div class="space-y-4">
         {% if not registros %}
-            <p class="text-center text-slate-400 text-xs py-10">Seleccione un rango de fechas.</p>
+            <div class="text-center py-16 opacity-30">
+                <i class="fa-solid fa-folder-open text-5xl mb-2"></i>
+                <p class="text-[10px] font-black uppercase">Sin registros en este rango</p>
+            </div>
         {% else %}
             {% for r in registros %}
-            <div class="bg-white p-4 rounded-[30px] shadow-sm border border-slate-100">
-                <div class="flex justify-between text-[9px] mb-2">
-                    <span class="font-black text-blue-900 uppercase">{{ r.funcionario }}</span>
-                    <span class="text-slate-400 font-bold">{{ r.fecha }}</span>
+            <div class="bg-white p-5 rounded-[35px] shadow-md border border-slate-100">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[9px] font-black text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">{{ r.funcionario }}</span>
+                    <span class="text-[9px] text-slate-400 font-bold italic">{{ r.fecha }}</span>
                 </div>
-                <h3 class="font-bold text-sm text-slate-800">{{ r.poc }}</h3>
-                <p class="text-[10px] text-slate-500 mb-3">{{ r.distancia_mts }}m | {{ r.motivo }}</p>
+                <h3 class="font-black text-slate-800 text-sm leading-tight mb-1">{{ r.poc }}</h3>
+                <div class="flex items-center gap-3 text-[9px] text-slate-400 font-bold uppercase mb-4">
+                    <span><i class="fa-solid fa-hashtag mr-1"></i>{{ r.bmb }}</span>
+                    <span><i class="fa-solid fa-location-dot mr-1"></i>{{ r.distancia_mts }}m</span>
+                </div>
+                
+                <div class="bg-slate-50 p-2 rounded-xl text-[8px] font-mono text-slate-500 mb-3 text-center border">
+                    GPS REAL: {{ r.ubicacion_gps_real }}
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
-                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-2xl border bg-slate-50">
-                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-2xl border bg-slate-50">
+                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-[20px] border shadow-inner">
+                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-[20px] border shadow-inner">
                 </div>
+                {% if r.observacion %}
+                <p class="mt-4 text-[10px] text-slate-600 bg-slate-50 p-3 rounded-2xl italic border-l-4 border-blue-900 leading-relaxed">"{{ r.observacion }}"</p>
+                {% endif %}
             </div>
             {% endfor %}
         {% endif %}
