@@ -1,61 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="space-y-5">
-    <div class="bg-white p-6 rounded-[35px] shadow-lg border border-slate-100">
-        <form action="/registros" method="GET" class="space-y-3">
-            <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-blue-900 opacity-40"></i>
-                <input type="text" name="busqueda" value="{{ busqueda }}" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" placeholder="Buscar por Nombre o BMB...">
+<div class="space-y-6">
+    <div class="bg-white p-6 rounded-[35px] shadow-lg border">
+        <form action="/registros" method="GET" class="grid md:grid-cols-4 gap-3 items-end">
+            <div class="md:col-span-2">
+                <input type="text" name="busqueda" value="{{ busqueda }}" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-xs font-bold" placeholder="Nombre o BMB...">
             </div>
-            
-            <div class="grid grid-cols-2 gap-2">
-                <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold border-none outline-none" required>
-                <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold border-none outline-none" required>
-            </div>
-            
-            <button type="submit" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-md">
-                <i class="fa-solid fa-filter mr-1"></i> Aplicar Filtros
-            </button>
+            <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-xs font-bold" required>
+            <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-3 bg-slate-50 rounded-xl outline-none text-xs font-bold" required>
+            <button type="submit" class="w-full bg-blue-900 text-white font-black py-3 rounded-xl uppercase text-[10px] md:col-span-4">Filtrar</button>
         </form>
     </div>
 
-    <div class="space-y-4">
-        {% if not registros %}
-            <div class="text-center py-20 opacity-20">
-                <i class="fa-solid fa-box-open text-6xl"></i>
-                <p class="text-[10px] font-black uppercase mt-4">Sin resultados</p>
-            </div>
-        {% else %}
-            <div class="flex justify-between items-center px-4">
-                <span class="text-[10px] font-black text-slate-400 uppercase">{{ registros|length }} Hallados</span>
-                <a href="{{ url_for('descargar_excel', f_inicio=f_inicio, f_fin=f_fin) }}" class="text-[10px] font-black text-green-600 uppercase italic">Descargar Todo</a>
-            </div>
-
-            {% for r in registros %}
-            <div class="bg-white p-5 rounded-[35px] shadow-md border border-slate-100">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-[9px] font-black text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase">{{ r.funcionario }}</span>
-                    <span class="text-[9px] text-slate-400 font-bold">{{ r.fecha }}</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for r in registros %}
+        <div class="bg-white p-5 rounded-[35px] shadow-md border flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-[8px] font-black text-blue-900 bg-blue-50 px-2 py-1 rounded-lg uppercase">{{ r.funcionario }}</span>
+                    <span class="text-[8px] text-slate-400 font-bold italic">{{ r.fecha }}</span>
                 </div>
-                
                 <h3 class="font-black text-slate-800 text-sm mb-1 uppercase">{{ r.poc }}</h3>
-                <div class="flex gap-4 text-[9px] font-bold text-slate-500 uppercase mb-3 border-b pb-2">
-                    <span>BMB: {{ r.bmb }}</span>
-                    <span>D: {{ r.distancia_mts }}m</span>
-                    <span class="text-blue-600">MOTIVO: {{ r.motivo }}</span>
-                </div>
-
+                <p class="text-[9px] font-bold text-blue-600 mb-3 uppercase">BMB: {{ r.bmb }} | {{ r.motivo }}</p>
                 <div class="grid grid-cols-2 gap-2 mb-3">
-                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-[20px] bg-slate-100 border">
-                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-[20px] bg-slate-100 border">
+                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-2xl border">
+                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-2xl border">
                 </div>
-                
-                <div class="text-[8px] font-mono text-slate-400 bg-slate-50 p-2 rounded-lg text-center">
-                    GPS REAL: {{ r.ubicacion_gps_real }}
-                </div>
+                {% if r.observacion %}
+                <div class="bg-slate-50 p-3 rounded-2xl mb-3 border-l-4 border-blue-900 text-[10px] text-slate-600 italic">"{{ r.observacion }}"</div>
+                {% endif %}
             </div>
-            {% endfor %}
-        {% endif %}
+            <p class="text-[7px] font-mono text-slate-300 text-center uppercase tracking-widest mt-2 border-t pt-2">GPS REAL: {{ r.gps_real }}</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
