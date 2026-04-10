@@ -65,7 +65,7 @@ CONFIG_FORMULARIOS = {
         "titulo": "Food Service", "icono": "fa-utensils",
         "preguntas": [
             {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
-            {"id": "Producto #1", "label": "Categoría", "type": "select", "options": 
+            {"id": "producto_1", "label": "Productos", "type": "multiselect", "options":  
              ["Aro - Caldo Desmenuzado 800 Grs",
                 "Aro - Caldo gallina 1 Kg",
                 "Aro - Base bechamel Aro x 1 Kg",
@@ -79,7 +79,7 @@ CONFIG_FORMULARIOS = {
                 "Colombina - Nucita x 1 Kg",
                 "Colombina - Nucita x 1.5 Kg"], "required": True}
             
-            {"id": "Precio #1", "label": "Categoría",  "type": "text", "required": True},
+            {"id": "Precio_1", "label": "Categoría",  "type": "text", "required": True},
         ]
     },
     "competencias": {
