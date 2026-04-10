@@ -2,37 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Power Trade Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .nav-active { color: #1e3a8a; border-top: 3px solid #1e3a8a; }
+        .main-container { max-width: 1200px; margin: 0 auto; }
+        .nav-link { transition: all 0.3s; }
+        .nav-link:hover { color: #93c5fd; }
     </style>
 </head>
-<body class="bg-slate-50 flex flex-col min-h-screen">
-    <header class="bg-blue-900 text-white p-4 text-center sticky top-0 z-50 shadow-lg">
-        <h1 class="font-black italic uppercase tracking-tighter text-xl">Power Trade</h1>
+<body class="bg-slate-100 flex flex-col min-h-screen">
+    <header class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50">
+        <div class="main-container flex justify-between items-center">
+            <h1 class="font-black italic uppercase tracking-tighter text-xl">Power Trade</h1>
+            <nav class="hidden md:flex gap-8 text-[11px] font-black uppercase">
+                <a href="/" class="nav-link">Visitas</a>
+                <a href="/prospecciones" class="nav-link">Prospección</a>
+                <a href="/registros" class="nav-link">Historial</a>
+            </nav>
+        </div>
     </header>
 
-    <main class="flex-grow p-4 max-w-md mx-auto w-full pb-32">
+    <main class="main-container flex-grow p-4 w-full pb-32">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="fixed bottom-16 left-0 right-0 bg-slate-100 text-[9px] text-slate-400 text-center py-2 border-t font-bold">
-        DESARROLLADO POR ANDRES VANEGAS
+    <footer class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md text-[8px] text-slate-400 text-center py-2 border-t font-black tracking-widest uppercase z-40">
+        Desarrollado por Andres Vanegas
     </footer>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-16 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-        <a href="/" class="flex flex-col items-center justify-center w-full h-full text-slate-400 transition-colors">
-            <i class="fa-solid fa-file-signature text-lg"></i>
-            <span class="text-[9px] font-black uppercase mt-1">Registro</span>
-        </a>
-        <a href="/registros" class="flex flex-col items-center justify-center w-full h-full text-slate-400 transition-colors">
-            <i class="fa-solid fa-chart-line text-lg"></i>
-            <span class="text-[9px] font-black uppercase mt-1">Historial</span>
-        </a>
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-16 z-50 shadow-2xl">
+        <a href="/" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-file-signature"></i><span class="text-[8px] mt-1 font-bold">VISITA</span></a>
+        <a href="/prospecciones" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-magnifying-glass-location"></i><span class="text-[8px] mt-1 font-bold">PROSPECTO</span></a>
+        <a href="/registros" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-clock-history"></i><span class="text-[8px] mt-1 font-bold">HISTORIAL</span></a>
     </nav>
 </body>
 </html>
