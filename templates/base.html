@@ -3,26 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Power Trade App</title>
+    <title>Power Trade Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-active { color: #1e3a8a; border-top: 3px solid #1e3a8a; }
+    </style>
 </head>
-<body class="bg-slate-50 pb-24">
-    <header class="bg-blue-900 text-white p-4 text-center sticky top-0 z-50 shadow-md">
-        <h1 class="font-black italic uppercase">Power Trade</h1>
+<body class="bg-slate-50 flex flex-col min-h-screen">
+    <header class="bg-blue-900 text-white p-4 text-center sticky top-0 z-50 shadow-lg">
+        <h1 class="font-black italic uppercase tracking-tighter text-xl">Power Trade</h1>
     </header>
 
-    <main class="p-4 max-w-md mx-auto">
+    <main class="flex-grow p-4 max-w-md mx-auto w-full pb-32">
         {% block content %}{% endblock %}
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
-        <a href="/" class="text-center">
-            <span class="block text-xl">📝</span>
-            <span class="text-[10px] font-bold uppercase text-slate-500">Registro</span>
+    <footer class="fixed bottom-16 left-0 right-0 bg-slate-100 text-[9px] text-slate-400 text-center py-2 border-t font-bold">
+        DESARROLLADO POR ANDRES VANEGAS
+    </footer>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-16 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <a href="/" class="flex flex-col items-center justify-center w-full h-full text-slate-400 transition-colors">
+            <i class="fa-solid fa-file-signature text-lg"></i>
+            <span class="text-[9px] font-black uppercase mt-1">Registro</span>
         </a>
-        <a href="/registros" class="text-center">
-            <span class="block text-xl">🖼️</span>
-            <span class="text-[10px] font-bold uppercase text-slate-500">Historial</span>
+        <a href="/registros" class="flex flex-col items-center justify-center w-full h-full text-slate-400 transition-colors">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-[9px] font-black uppercase mt-1">Historial</span>
         </a>
     </nav>
 </body>
