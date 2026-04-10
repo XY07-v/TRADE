@@ -530,6 +530,18 @@ CONFIG_FORMULARIOS = {
             {"id": "Sector", "label": "Sector", "type": "select", "options": ["Food_Tinteros","Educacion", "Cafeteria", "Panaderia","Restaurante","Salud","Transporte"], "required": True},
             {"id": "Conpetencia", "label": "Conpetencia", "type": "select", "options": ["Oma", "Oxxo", "Starbucks","Tostao","Juan Valdez","Cafe Quindio","Colcafe","La locura","Amor perfecto"], "required": True},
             {"id": "Tipo de Maquina", "label": "Tipo de Maquina", "type": "select", "options": ["En grano", "Soluble", "Greca","Termos","Cafetera","Capuchinera","Food_recarga","Food_Prepara"], "required": True},
+            {"id": "producto_1", "label": "Productos_1", "type": "select", "options": 
+             [], "required": True},
+            {"id": "Tamaño_1", "label": "Tamaño_1", "type": "select", "options": ["4 Oz","7 Oz","9 Oz","12 Oz","Mediano","Grande","Extragrande"], "required": True},
+            {"id": "Precio_1", "label": "Precio_1", "type": "text", "required": True},
+            {"id": "producto_2", "label": "Productos_2", "type": "select", "options": 
+             [], "required": True},
+            {"id": "Tamaño_2", "label": "Tamaño_2", "type": "select", "options": ["4 Oz","7 Oz","9 Oz","12 Oz","Mediano","Grande","Extragrande"], "required": True},
+            {"id": "Precio_2", "label": "Precio_2", "type": "text", "required": True},
+            {"id": "producto_3", "label": "Productos_3", "type": "select", "options": 
+             [], "required": True},
+            {"id": "Tamaño_3", "label": "Tamaño_3", "type": "select", "options": ["4 Oz","7 Oz","9 Oz","12 Oz","Mediano","Grande","Extragrande"], "required": True},
+            {"id": "Precio_3", "label": "Precio_3", "type": "text", "required": True},
             {"id": "Observaciones", "label": "Observaciones", "type": "text", "required": True},
 
 
