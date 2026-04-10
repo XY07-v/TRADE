@@ -1,49 +1,63 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <form action="/guardar_dinamico/{{ tipo_url }}" method="POST" class="bg-white p-6 rounded-[40px] shadow-2xl border border-slate-100 space-y-6">
-        <h2 class="text-blue-900 font-black uppercase text-sm flex items-center gap-3 border-b pb-4">
-            <i class="fa-solid {{ icono }} text-xl"></i> {{ titulo }}
-        </h2>
+<div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden transition-all">
+    <div class="bg-slate-50 p-8 border-b border-slate-100 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-black text-blue-900 uppercase tracking-tight flex items-center gap-3">
+                <i class="fa-solid {{ icono }}"></i> {{ titulo }}
+            </h2>
+            <p class="text-slate-400 text-xs font-medium">Complete la información requerida para el registro en sistema.</p>
+        </div>
+        <div class="hidden md:block text-right">
+            <span class="text-[10px] font-black text-slate-300 uppercase block tracking-widest">Power Trade v2.0</span>
+            <span class="text-xs font-bold text-green-500">Sistema en Línea</span>
+        </div>
+    </div>
 
-        <div class="space-y-5">
-            <div>
-                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Asesor Responsable</label>
-                <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-sm shadow-inner" required>
-                    <option value="">Seleccione...</option>
+    <form action="/guardar_dinamico/{{ tipo_url }}" method="POST" class="p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 block ml-1">Responsable del Registro</label>
+                <select name="funcionario" class="w-full p-4 bg-slate-100 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none font-bold transition-all" required>
+                    <option value="">Seleccionar Asesor...</option>
                     {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
                 </select>
             </div>
 
             {% for p in preguntas %}
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">{{ p.label }} {% if p.required %}*{% endif %}</label>
+            <div class="{% if p.type == 'textarea' or p.type == 'multiselect' %} md:col-span-2 {% endif %} space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider block ml-1">
+                    {{ p.label }} {% if p.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
                 
                 {% if p.type == 'multiselect' %}
-                    <select name="{{ p.id }}" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm min-h-[140px] shadow-inner" multiple {% if p.required %}required{% endif %}>
-                        {% for opt in p.options %}<option value="{{ opt }}" class="py-2 px-2 border-b border-slate-100 last:border-0">{{ opt }}</option>{% endfor %}
+                    <select name="{{ p.id }}" class="w-full p-4 bg-slate-100 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none font-bold min-h-[160px]" multiple {% if p.required %}required{% endif %}>
+                        {% for opt in p.options %}<option value="{{ opt }}" class="p-2 border-b border-white/50">{{ opt }}</option>{% endfor %}
                     </select>
-                    <p class="text-[8px] text-blue-500 font-bold ml-2">Móvil: Toca varios | PC: Ctrl + Clic</p>
+                    <p class="text-[10px] text-blue-500 italic mt-2">Para PC: Mantenga Ctrl presionado para seleccionar múltiples productos.</p>
 
                 {% elif p.type == 'select' %}
-                    <select name="{{ p.id }}" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm shadow-inner" {% if p.required %}required{% endif %}>
-                        <option value="">Seleccione...</option>
+                    <select name="{{ p.id }}" class="w-full p-4 bg-slate-100 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none font-bold" {% if p.required %}required{% endif %}>
+                        <option value="">Seleccione una opción...</option>
                         {% for opt in p.options %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
                     </select>
 
                 {% elif p.type == 'textarea' %}
-                    <textarea name="{{ p.id }}" rows="3" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm shadow-inner" placeholder="..." {% if p.required %}required{% endif %}></textarea>
+                    <textarea name="{{ p.id }}" rows="4" class="w-full p-4 bg-slate-100 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none font-medium" placeholder="Escriba aquí..." {% if p.required %}required{% endif %}></textarea>
 
                 {% else %}
-                    <input type="{{ p.type }}" name="{{ p.id }}" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-sm shadow-inner" placeholder="..." {% if p.required %}required{% endif %}>
+                    <input type="{{ p.type }}" name="{{ p.id }}" class="w-full p-4 bg-slate-100 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none font-bold" placeholder="..." {% if p.required %}required{% endif %}>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
 
-        <button type="submit" class="w-full bg-blue-900 text-white font-black py-5 rounded-[30px] uppercase shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-            <i class="fa-solid fa-floppy-disk"></i> Guardar Registro
-        </button>
+        <div class="mt-12 flex justify-end border-t pt-8">
+            <button type="submit" class="bg-blue-900 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-tighter hover:bg-blue-800 hover:shadow-2xl transition-all flex items-center gap-3">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Sincronizar con Base de Datos
+            </button>
+        </div>
     </form>
 </div>
 {% endblock %}
