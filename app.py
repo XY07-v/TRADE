@@ -66,21 +66,16 @@ CONFIG_FORMULARIOS = {
         "preguntas": [
             {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
             {"id": "producto_1", "label": "Productos", "type": "multiselect", "options": 
-             ["Maquina",
-              "Nescafe Alegria Cappuccino 4 X 1 Kgco", 
-              "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
-              "Nescafe Alegria Cappuccino 4 X 1 Kgco",
-                "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
-                "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
-                "Abuelita Chocolate Venta 6 X 750G Mx ",
-                "Nescafe Cafe En Grano Npro 6 X 1Kg Co",
-                "Nestle Cobertura De Cacao Leche 2 X 5Kg Co",
-                "Nestle Cobertura Cac Semiamarga 2 X 5Kg Co",
-                "La Lechera Leche Condensada 4 X 4.5Kg Co",
-                "La Lechera Npro Leche Condensada6 X 800Gco",
-                "Nescafe Dolca Npro 11 X 1Kg Co",
-
-              "Milo Granulado", "Leche Nestlé"], "required": True},
+             ["Aro - Caldo Desmenuzado 800 Grs",
+"Aro - Caldo gallina 1 Kg",
+"Aro - Base bechamel Aro x 1 Kg",
+"Aro - Leche condesada Aro x 1.3 Kg",
+"Aro - Leche condesada Aro x 3.9 Kg",
+"Aro - Leche condesada Aro x 5 Kg",
+"Bugueña - Leche condensada la bugueña x 1 Kg",
+"Bugueña - Leche condensada la bugueña x 5 Kg",
+"Carreta - Leche condensada la Carreta x 1 Kg",
+"Carreta - Leche condensada la Carreta x 5 Kg"], "required": True},
             
             {"id": "Precio_1", "label": "Categoría",  "type": "text", "required": True},
         ]
