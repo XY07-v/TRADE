@@ -2,54 +2,57 @@
 {% block content %}
 <div class="space-y-5">
     <div class="bg-white p-6 rounded-[35px] shadow-lg border border-slate-100">
-        <div class="flex items-center gap-2 mb-4">
-            <i class="fa-solid fa-calendar-days text-blue-900"></i>
-            <h3 class="text-xs font-black text-slate-400 uppercase">Consultar Periodo</h3>
-        </div>
         <form action="/registros" method="GET" class="space-y-3">
-            <div class="grid grid-cols-2 gap-2">
-                <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" required>
-                <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" required>
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-blue-900 opacity-40"></i>
+                <input type="text" name="busqueda" value="{{ busqueda }}" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none" placeholder="Buscar por Nombre o BMB...">
             </div>
-            <button type="submit" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-md hover:bg-blue-800 transition-all">Ver Resultados</button>
+            
+            <div class="grid grid-cols-2 gap-2">
+                <input type="date" name="f_inicio" value="{{ f_inicio }}" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold border-none outline-none" required>
+                <input type="date" name="f_fin" value="{{ f_fin }}" class="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold border-none outline-none" required>
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-md">
+                <i class="fa-solid fa-filter mr-1"></i> Aplicar Filtros
+            </button>
         </form>
-        {% if registros %}
-        <a href="{{ url_for('descargar_excel', f_inicio=f_inicio, f_fin=f_fin) }}" class="block mt-3 w-full bg-green-600 text-white text-center font-black py-4 rounded-2xl uppercase text-[10px] shadow-sm">
-            <i class="fa-solid fa-file-excel mr-1"></i> Exportar a Excel
-        </a>
-        {% endif %}
     </div>
 
     <div class="space-y-4">
         {% if not registros %}
-            <div class="text-center py-16 opacity-30">
-                <i class="fa-solid fa-folder-open text-5xl mb-2"></i>
-                <p class="text-[10px] font-black uppercase">Sin registros en este rango</p>
+            <div class="text-center py-20 opacity-20">
+                <i class="fa-solid fa-box-open text-6xl"></i>
+                <p class="text-[10px] font-black uppercase mt-4">Sin resultados</p>
             </div>
         {% else %}
+            <div class="flex justify-between items-center px-4">
+                <span class="text-[10px] font-black text-slate-400 uppercase">{{ registros|length }} Hallados</span>
+                <a href="{{ url_for('descargar_excel', f_inicio=f_inicio, f_fin=f_fin) }}" class="text-[10px] font-black text-green-600 uppercase italic">Descargar Todo</a>
+            </div>
+
             {% for r in registros %}
             <div class="bg-white p-5 rounded-[35px] shadow-md border border-slate-100">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-[9px] font-black text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">{{ r.funcionario }}</span>
-                    <span class="text-[9px] text-slate-400 font-bold italic">{{ r.fecha }}</span>
-                </div>
-                <h3 class="font-black text-slate-800 text-sm leading-tight mb-1">{{ r.poc }}</h3>
-                <div class="flex items-center gap-3 text-[9px] text-slate-400 font-bold uppercase mb-4">
-                    <span><i class="fa-solid fa-hashtag mr-1"></i>{{ r.bmb }}</span>
-                    <span><i class="fa-solid fa-location-dot mr-1"></i>{{ r.distancia_mts }}m</span>
+                    <span class="text-[9px] font-black text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase">{{ r.funcionario }}</span>
+                    <span class="text-[9px] text-slate-400 font-bold">{{ r.fecha }}</span>
                 </div>
                 
-                <div class="bg-slate-50 p-2 rounded-xl text-[8px] font-mono text-slate-500 mb-3 text-center border">
-                    GPS REAL: {{ r.ubicacion_gps_real }}
+                <h3 class="font-black text-slate-800 text-sm mb-1 uppercase">{{ r.poc }}</h3>
+                <div class="flex gap-4 text-[9px] font-bold text-slate-500 uppercase mb-3 border-b pb-2">
+                    <span>BMB: {{ r.bmb }}</span>
+                    <span>D: {{ r.distancia_mts }}m</span>
+                    <span class="text-blue-600">MOTIVO: {{ r.motivo }}</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-[20px] border shadow-inner">
-                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-[20px] border shadow-inner">
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-[20px] bg-slate-100 border">
+                    <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-[20px] bg-slate-100 border">
                 </div>
-                {% if r.observacion %}
-                <p class="mt-4 text-[10px] text-slate-600 bg-slate-50 p-3 rounded-2xl italic border-l-4 border-blue-900 leading-relaxed">"{{ r.observacion }}"</p>
-                {% endif %}
+                
+                <div class="text-[8px] font-mono text-slate-400 bg-slate-50 p-2 rounded-lg text-center">
+                    GPS REAL: {{ r.ubicacion_gps_real }}
+                </div>
             </div>
             {% endfor %}
         {% endif %}
