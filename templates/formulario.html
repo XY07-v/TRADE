@@ -1,60 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<form action="/guardar" method="POST" enctype="multipart/form-data" class="space-y-4">
+<form action="/guardar" id="mainForm" method="POST" enctype="multipart/form-data" class="space-y-4">
     <div class="bg-white p-6 rounded-[35px] shadow-xl border border-slate-100">
-        <div class="flex items-center gap-2 mb-4">
-            <i class="fa-solid fa-user-tie text-blue-900"></i>
-            <label class="text-[10px] font-black text-slate-400 uppercase">Funcionario Responsable</label>
-        </div>
-        <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none text-sm font-semibold" required>
-            <option value="">Seleccione...</option>
+        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">1. Seleccione Funcionario *</label>
+        <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none mb-6" required>
+            <option value="">Elegir...</option>
             {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
         </select>
 
-        <hr class="my-6 opacity-50">
-
-        <div class="space-y-4">
-            <div class="relative">
-                <i class="fa-solid fa-shop absolute left-4 top-4 text-blue-900 opacity-50"></i>
-                <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl border-none text-sm font-bold" placeholder="Nombre del Punto..." required>
-                <datalist id="l_poc">{% for p in maestro %}<option value="{{p.Poc}}">{% endfor %}</datalist>
-            </div>
-            
-            <div class="relative">
-                <i class="fa-solid fa-barcode absolute left-4 top-4 text-blue-900 opacity-50"></i>
-                <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl border-none text-sm font-bold" placeholder="Código BMB..." required>
-                <datalist id="l_bmb">{% for p in maestro %}<option value="{{p.BMB}}">{% endfor %}</datalist>
-            </div>
+        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">2. Datos del Punto de Venta *</label>
+        <div class="space-y-3">
+            <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" placeholder="Nombre POC..." required>
+            <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" placeholder="Código BMB..." required>
         </div>
 
-        <div id="status_box" class="mt-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center transition-all">
-            <i id="gps_icon" class="fa-solid fa-location-crosshairs text-slate-300 animate-pulse mb-1"></i>
-            <span id="dist_txt" class="text-[10px] font-black text-slate-400 uppercase">Esperando GPS...</span>
+        <div id="status_box" class="mt-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
+            <i id="gps_icon" class="fa-solid fa-location-dot text-slate-300 mb-1"></i>
+            <span id="dist_txt" class="text-[10px] font-black text-slate-400 uppercase text-center leading-tight">Mueva el buscador para activar GPS</span>
         </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-[35px] shadow-lg border border-slate-100">
+        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">3. Motivo de la Visita *</label>
+        <select name="motivo" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" required>
+            <option value="">Seleccione Motivo...</option>
+            <option value="Visita de Ruta">Visita de Ruta</option>
+            <option value="Punto Cerrado">Punto Cerrado</option>
+            <option value="Novedad en Máquina">Novedad en Máquina</option>
+            <option value="Otro">Otro / Especial</option>
+        </select>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-        <label class="bg-white p-5 rounded-[30px] border border-slate-200 flex flex-col items-center gap-2 active:scale-95 transition-all">
-            <i class="fa-solid fa-camera text-blue-900"></i>
-            <span class="text-[9px] font-black uppercase text-slate-500">Foto Máquina</span>
-            <input type="file" name="foto_maquina" capture="camera" accept="image/*" required class="hidden">
+        <label id="label_f1" class="bg-white p-5 rounded-[30px] border-2 border-red-200 flex flex-col items-center gap-2">
+            <i class="fa-solid fa-camera text-slate-400"></i>
+            <span class="text-[9px] font-black uppercase text-slate-500">Foto Máquina *</span>
+            <input type="file" name="foto_maquina" id="f1" capture="camera" accept="image/*" required class="hidden" onchange="markDone('label_f1')">
         </label>
-        <label class="bg-white p-5 rounded-[30px] border border-slate-200 flex flex-col items-center gap-2 active:scale-95 transition-all">
-            <i class="fa-solid fa-store text-blue-900"></i>
-            <span class="text-[9px] font-black uppercase text-slate-500">Foto Fachada</span>
-            <input type="file" name="foto_fachada" capture="camera" accept="image/*" required class="hidden">
+        <label id="label_f2" class="bg-white p-5 rounded-[30px] border-2 border-red-200 flex flex-col items-center gap-2">
+            <i class="fa-solid fa-store text-slate-400"></i>
+            <span class="text-[9px] font-black uppercase text-slate-500">Foto Fachada *</span>
+            <input type="file" name="foto_fachada" id="f2" capture="camera" accept="image/*" required class="hidden" onchange="markDone('label_f2')">
         </label>
     </div>
 
-    <textarea name="observacion" rows="2" class="w-full p-5 rounded-[30px] border border-slate-200 outline-none text-sm" placeholder="Añadir nota adicional (opcional)..."></textarea>
+    <textarea name="observacion" rows="2" class="w-full p-5 rounded-[30px] border border-slate-200 outline-none text-sm" placeholder="Observaciones opcionales..."></textarea>
 
     <input type="hidden" id="h_gps_real" name="gps_real">
     <input type="hidden" id="h_dist" name="distancia_metros">
-    <input type="hidden" name="motivo" value="Visita de Ruta">
 
-    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[30px] uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-2">
-        <i class="fa-solid fa-cloud-arrow-up"></i>
-        Finalizar Reporte
+    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[30px] uppercase shadow-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-lock"></i> Completar Datos para Enviar
     </button>
 </form>
 
@@ -64,9 +60,14 @@
 
     navigator.geolocation.watchPosition(p => {
         lat = p.coords.latitude; lon = p.coords.longitude;
-        document.getElementById('h_gps_real').value = lat + ", " + lon; // CAPTURA REAL
-        if(document.getElementById('i_poc').value) sync('Poc');
+        document.getElementById('h_gps_real').value = lat + ", " + lon;
     }, null, {enableHighAccuracy:true});
+
+    function markDone(id) {
+        const el = document.getElementById(id);
+        el.classList.replace('border-red-200', 'border-green-500');
+        el.querySelector('i').classList.replace('text-slate-400', 'text-green-500');
+    }
 
     function sync(tipo) {
         const val = (tipo === 'Poc') ? document.getElementById('i_poc').value : document.getElementById('i_bmb').value;
@@ -75,28 +76,18 @@
         if(item && lat) {
             document.getElementById('i_poc').value = item.Poc;
             document.getElementById('i_bmb').value = item.BMB;
+            document.getElementById('i_poc').className = "w-full p-4 bg-slate-50 rounded-2xl border-2 border-green-500 outline-none";
+            document.getElementById('i_bmb').className = "w-full p-4 bg-slate-50 rounded-2xl border-2 border-green-500 outline-none";
+
             const [rLat, rLon] = item.Ubicacion_Ref.split(',').map(Number);
             const d = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2), Math.sqrt(1-(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2))));
             
-            const t = document.getElementById('dist_txt');
-            const box = document.getElementById('status_box');
-            const icon = document.getElementById('gps_icon');
-            
-            t.innerText = d + " METROS DE DISTANCIA";
+            document.getElementById('dist_txt').innerText = d + " MTS AL PUNTO";
             document.getElementById('h_dist').value = d;
-            
-            if(d > 150) {
-                box.className = "mt-6 p-4 rounded-2xl border-2 border-dashed border-red-200 bg-red-50 flex flex-col items-center justify-center";
-                t.className = "text-[10px] font-black text-red-600 uppercase";
-                icon.className = "fa-solid fa-circle-exclamation text-red-600";
-            } else {
-                box.className = "mt-6 p-4 rounded-2xl border-2 border-dashed border-green-200 bg-green-50 flex flex-col items-center justify-center";
-                t.className = "text-[10px] font-black text-green-600 uppercase";
-                icon.className = "fa-solid fa-circle-check text-green-600";
-            }
             
             const b = document.getElementById('btn');
             b.disabled = false; b.classList.replace('bg-slate-300', 'bg-blue-900');
+            b.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Reporte Ahora';
         }
     }
 </script>
