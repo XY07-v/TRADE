@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-4">
+    {% for r in registros %}
+    <div class="bg-white p-4 rounded-[30px] shadow-sm border border-slate-200">
+        <div class="flex justify-between text-[10px] mb-2">
+            <span class="font-black text-blue-900 uppercase">{{ r.funcionario }}</span>
+            <span class="text-slate-400">{{ r.fecha }}</span>
+        </div>
+        <h3 class="font-bold text-sm">{{ r.poc }}</h3>
+        <p class="text-[10px] text-slate-500 mb-3">Distancia: {{ r.distancia }}m | Motivo: {{ r.motivo }}</p>
+        
+        <div class="grid grid-cols-2 gap-2 mb-2">
+            <img src="/foto/{{ r.foto_maquina_id }}" class="w-full h-32 object-cover rounded-2xl border bg-slate-100" alt="Máquina">
+            <img src="/foto/{{ r.foto_fachada_id }}" class="w-full h-32 object-cover rounded-2xl border bg-slate-100" alt="Fachada">
+        </div>
+        
+        {% if r.observacion %}
+        <p class="text-[10px] italic bg-slate-50 p-2 rounded-xl text-slate-600">"{{ r.observacion }}"</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
