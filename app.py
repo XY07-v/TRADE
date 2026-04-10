@@ -29,9 +29,15 @@ CONFIG_FORMULARIOS = {
             {"id": "contacto", "label": "Nombre Propietario", "type": "text", "required": True},
             {"id": "telefono", "label": "Teléfono", "type": "number", "required": True},
             {"id": "direccion", "label": "Dirección", "type": "text", "required": True},
-            {"id": "potencial", "label": "Potencial", "type": "select", "options": ["Bajo", "Medio", "Alto"], "required": True},
-            {"id": "productos", "label": "Productos", "type": "multiselect", "options": ["Nescafe Alegria Cappuccino 4 X 1 Kgco", "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco", "Milo Granulado", "Leche Nestlé"], "required": True},
-            {"id": "competencia", "label": "¿Tiene competencia?", "type": "select", "options": ["Ninguna", "BetPlay", "Wplay", "Otras"], "required": False},
+            {"id": "Sector", "label": "Sector", "type": "select", "options": ["Educacion", "Cafeteria", "Panaderia","Restaurante","Salud","Transporte","Tinteros"], "required": True},
+            {"id": "Interesado en?", "label": "Interesado en?", "type": "select", "options": ["Maquina", "Food", "Ambos","No esta interesado"], "required": True},
+            {"id": "productos", "label": "Productos", "type": "multiselect", "options": 
+             ["Nescafe Alegria Cappuccino 4 X 1 Kgco", 
+              "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
+              "Milo Granulado", "Leche Nestlé"], "required": True},
+            
+            {"id": "Venta Efectiva", "label": "Venta Efectiva", "type": "multiselect", "options": ["Si", "No"], "required": False},
+            {"id": "Seguimiento", "label": "Seguimiento", "type": "multiselect", "options": ["Si", "No"], "required": False},
             {"id": "observaciones", "label": "Notas", "type": "textarea", "required": False}
         ]
     },
