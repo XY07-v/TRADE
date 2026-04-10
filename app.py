@@ -19,6 +19,15 @@ db = client['POWER_TRADE']
 fs = gridfs.GridFS(db) 
 coleccion_visitas = db['Visitas_a_POC']
 
+# --- SISTEMA DE ACCESO (DICCIONARIO) ---
+USUARIOS_PERMITIDOS = {
+    "admin": "power2026",
+    "andres.vanegas": "nestle2026",
+    "gerente": "trade789"
+}
+
+from flask import session # Asegúrate de importar session de flask
+
 # --- CONFIGURACIÓN DE FORMULARIOS DINÁMICOS ---
 CONFIG_FORMULARIOS = {
     "prospecciones": {
@@ -966,6 +975,40 @@ def descargar_excel():
 def servir_foto(foto_id):
     archivo = fs.get(ObjectId(foto_id))
     return Response(archivo.read(), mimetype='image/jpeg')
+
+# --- 2. EL PROTECTOR (DECORADOR) ---
+# Esta función protege tus rutas actuales sin cambiar su lógica interna#______________________________________________________
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'usuario_logueado' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- 3. RUTAS DE GESTIÓN DE ACCESO ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        user = request.form.get('username')
+        pw = request.form.get('password')
+        
+        # Validación contra el diccionario
+        if user in USUARIOS_ACCESO and USUARIOS_ACCESO[user] == pw:
+            session['usuario_logueado'] = user
+            # Redirige a la página principal después de entrar
+            return redirect(url_for('index'))
+        else:
+            error = "Credenciales incorrectas. Intente de nuevo."
+            
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('usuario_logueado', None)
+    return redirect(url_for('login'))#______________________________________________________
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
