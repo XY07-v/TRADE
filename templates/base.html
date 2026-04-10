@@ -3,46 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Power Trade Management</title>
+    <title>Power Trade | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .main-container { max-width: 1200px; margin: 0 auto; }
-        .nav-link { transition: all 0.3s; }
-        .nav-link:hover { color: #93c5fd; }
-        ::-webkit-scrollbar { height: 4px; }
-        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background: rgba(255,255,255,0.1); border-radius: 12px; }
+        .active-link { background: #2563eb !important; border-radius: 12px; font-weight: 800; }
     </style>
 </head>
-<body class="bg-slate-100 flex flex-col min-h-screen">
-    <header class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50">
-        <div class="main-container flex justify-between items-center">
-            <h1 class="font-black italic uppercase text-xl">Power Trade</h1>
-            <nav class="hidden lg:flex gap-4 text-[10px] font-black uppercase">
-                <a href="/" class="nav-link">Visitas</a>
-                <a href="/form/prospecciones" class="nav-link">Prospectos</a>
-                <a href="/form/leads" class="nav-link">Leads</a>
-                <a href="/form/food" class="nav-link">Food</a>
-                <a href="/form/competencias" class="nav-link">Competencias</a>
-                <a href="/form/ingredientes" class="nav-link">Insumos</a>
-                <a href="/registros" class="nav-link text-yellow-400 border-l pl-4">Historial</a>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="lg:hidden bg-blue-900 p-4 text-white flex justify-between items-center shadow-lg">
+        <span class="font-black uppercase tracking-tighter">Power Trade</span>
+        <button onclick="toggleSidebar()" class="text-2xl"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <div class="flex min-h-screen">
+        <aside id="sidebar" class="hidden lg:flex flex-col w-72 bg-blue-900 text-white p-6 fixed h-full z-50 transition-all shadow-2xl">
+            <div class="mb-10 text-center">
+                <h1 class="text-2xl font-black italic tracking-tighter">POWER TRADE</h1>
+                <p class="text-[9px] opacity-50 font-bold uppercase tracking-[3px]">Enterprise System</p>
+            </div>
+
+            <nav class="space-y-2 flex-grow overflow-y-auto">
+                <p class="text-[10px] font-bold opacity-40 uppercase mb-4 ml-2">Módulos de Campo</p>
+                <a href="/" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-location-dot w-5"></i> Visita POC</a>
+                <a href="/form/prospecciones" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-magnifying-glass-location w-5"></i> Prospecciones</a>
+                <a href="/form/leads" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-user-tie w-5"></i> Gestión Leads</a>
+                <a href="/form/food" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-utensils w-5"></i> Food Service</a>
+                
+                <p class="text-[10px] font-bold opacity-40 uppercase mt-8 mb-4 ml-2">Inteligencia</p>
+                <a href="/form/competencias" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-handshake-slash w-5"></i> Competencia</a>
+                <a href="/form/ingredientes" class="sidebar-link flex items-center gap-3 p-3 text-sm"><i class="fa-solid fa-jar w-5"></i> Insumos</a>
+                
+                <p class="text-[10px] font-bold opacity-40 uppercase mt-8 mb-4 ml-2">Reportes</p>
+                <a href="/registros" class="sidebar-link flex items-center gap-3 p-3 text-sm text-yellow-400 font-bold"><i class="fa-solid fa-chart-line w-5"></i> Historial General</a>
             </nav>
-        </div>
-    </header>
 
-    <main class="main-container flex-grow p-4 w-full pb-32">
-        {% block content %}{% endblock %}
-    </main>
+            <div class="border-t border-white/10 pt-4 mt-4">
+                <p class="text-[9px] text-center opacity-40 font-bold">DESARROLLADO POR ANDRES VANEGAS</p>
+            </div>
+        </aside>
 
-    <footer class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md text-[8px] text-slate-400 text-center py-2 border-t font-black uppercase z-40">
-        Desarrollado por Andres Vanegas
-    </footer>
+        <main class="flex-grow lg:ml-72 p-4 md:p-10">
+            <div class="max-w-6xl mx-auto">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
 
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex items-center h-16 z-50 overflow-x-auto px-4 gap-6">
-        <a href="/" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-house"></i><span class="text-[7px] font-bold">VISITA</span></a>
-        <a href="/form/prospecciones" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-magnifying-glass"></i><span class="text-[7px] font-bold">PROSP</span></a>
-        <a href="/form/leads" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-user-tie"></i><span class="text-[7px] font-bold">LEADS</span></a>
-        <a href="/registros" class="flex flex-col items-center text-blue-900 min-w-[50px]"><i class="fa-solid fa-clock-history"></i><span class="text-[7px] font-bold">HIST</span></a>
-    </nav>
+    <script>
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('hidden');
+            sb.classList.toggle('flex');
+        }
+    </script>
 </body>
 </html>
