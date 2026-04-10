@@ -9,38 +9,37 @@
         </select>
 
         <label class="text-[10px] font-black text-blue-900 uppercase">Punto de Venta</label>
-        <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-3 bg-slate-50 rounded-xl mb-2" placeholder="Escriba Nombre..." required>
+        <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-3 bg-slate-50 rounded-xl mb-2" placeholder="Nombre POC..." required>
         <datalist id="l_poc">{% for p in maestro %}<option value="{{p.Poc}}">{% endfor %}</datalist>
         
-        <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-3 bg-slate-50 rounded-xl" placeholder="Escriba BMB..." required>
+        <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-3 bg-slate-50 rounded-xl" placeholder="Código BMB..." required>
         <datalist id="l_bmb">{% for p in maestro %}<option value="{{p.BMB}}">{% endfor %}</datalist>
 
         <div class="mt-4 p-3 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 text-center">
-            <span id="dist_txt" class="text-xs font-black text-slate-400">GPS NO CARGADO</span>
+            <span id="dist_txt" class="text-xs font-black text-slate-400 italic tracking-tighter">SIN GPS</span>
         </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-        <label class="bg-white p-4 rounded-3xl border text-center relative">
-            <span class="text-[10px] font-bold uppercase">Máquina *</span>
+        <label class="bg-white p-4 rounded-3xl border text-center relative active:bg-slate-100">
+            <span class="text-[10px] font-bold uppercase">Máquina</span>
             <input type="file" name="foto_maquina" capture="camera" accept="image/*" required class="absolute inset-0 opacity-0">
         </label>
-        <label class="bg-white p-4 rounded-3xl border text-center relative">
-            <span class="text-[10px] font-bold uppercase">Fachada *</span>
+        <label class="bg-white p-4 rounded-3xl border text-center relative active:bg-slate-100">
+            <span class="text-[10px] font-bold uppercase">Fachada</span>
             <input type="file" name="foto_fachada" capture="camera" accept="image/*" required class="absolute inset-0 opacity-0">
         </label>
     </div>
 
     <select name="motivo" class="w-full p-4 bg-white rounded-2xl border shadow-sm outline-none" required>
         <option value="Ruta">Visita Ruta</option>
-        <option value="Cerrado">Punto Cerrado</option>
         <option value="Novedad">Novedad</option>
     </select>
 
-    <textarea name="observacion" rows="2" class="w-full p-4 rounded-2xl border outline-none" placeholder="Observaciones..."></textarea>
-
+    <textarea name="observacion" rows="2" class="w-full p-4 rounded-2xl border outline-none resize-none" placeholder="Observaciones..."></textarea>
     <input type="hidden" id="h_dist" name="distancia_metros">
-    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[25px] uppercase tracking-widest shadow-lg transition-all">
+
+    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[25px] uppercase shadow-lg transition-all">
         Guardar Reporte
     </button>
 </form>
