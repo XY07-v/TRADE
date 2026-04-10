@@ -1,58 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<form action="/guardar" id="mainForm" method="POST" enctype="multipart/form-data" class="space-y-4">
-    <div class="bg-white p-6 rounded-[35px] shadow-xl border border-slate-100">
-        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">1. Seleccione Funcionario *</label>
-        <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none mb-6" required>
-            <option value="">Elegir...</option>
-            {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
-        </select>
+<div class="max-w-xl mx-auto">
+    <form action="/guardar_visita" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div class="bg-white p-6 rounded-[35px] shadow-xl border border-slate-100">
+            <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">1. Funcionario Responsable *</label>
+            <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-blue-900 outline-none mb-6 font-bold" required>
+                <option value="">Seleccione...</option>
+                {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
+            </select>
 
-        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">2. Datos del Punto de Venta *</label>
-        <div class="space-y-3">
-            <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" placeholder="Nombre POC..." required>
-            <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" placeholder="Código BMB..." required>
+            <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">2. Ubicación del Punto *</label>
+            <div class="space-y-3">
+                <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-50 focus:border-blue-900 outline-none font-bold" placeholder="Nombre POC..." required>
+                <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-50 focus:border-blue-900 outline-none font-bold" placeholder="Código BMB..." required>
+                <datalist id="l_poc">{% for p in maestro %}<option value="{{p.Poc}}">{% endfor %}</datalist>
+                <datalist id="l_bmb">{% for p in maestro %}<option value="{{p.BMB}}">{% endfor %}</datalist>
+            </div>
+
+            <div id="status_box" class="mt-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center transition-all">
+                <i id="gps_icon" class="fa-solid fa-location-dot text-slate-300 mb-1"></i>
+                <span id="dist_txt" class="text-[10px] font-black text-slate-400 uppercase text-center">Sincronizando GPS...</span>
+            </div>
         </div>
 
-        <div id="status_box" class="mt-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
-            <i id="gps_icon" class="fa-solid fa-location-dot text-slate-300 mb-1"></i>
-            <span id="dist_txt" class="text-[10px] font-black text-slate-400 uppercase text-center leading-tight">Mueva el buscador para activar GPS</span>
+        <div class="bg-white p-6 rounded-[35px] shadow-lg border">
+            <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">3. Motivo y Notas *</label>
+            <select name="motivo" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-50 focus:border-blue-900 outline-none mb-3 font-bold" required>
+                <option value="">Elegir Motivo...</option>
+                <option value="Ruta">Visita de Ruta</option>
+                <option value="Cerrado">Punto Cerrado</option>
+                <option value="Novedad">Novedad / Soporte</option>
+            </select>
+            <textarea name="observacion" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm" placeholder="Observaciones detalladas..."></textarea>
         </div>
-    </div>
 
-    <div class="bg-white p-6 rounded-[35px] shadow-lg border border-slate-100">
-        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">3. Motivo de la Visita *</label>
-        <select name="motivo" class="w-full p-4 bg-slate-50 rounded-2xl border-2 border-red-100 focus:border-blue-900 outline-none" required>
-            <option value="">Seleccione Motivo...</option>
-            <option value="Visita de Ruta">Visita de Ruta</option>
-            <option value="Punto Cerrado">Punto Cerrado</option>
-            <option value="Novedad en Máquina">Novedad en Máquina</option>
-            <option value="Otro">Otro / Especial</option>
-        </select>
-    </div>
+        <div class="grid grid-cols-2 gap-3">
+            <label id="label_f1" class="bg-white p-5 rounded-[30px] border-2 border-red-100 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-camera text-slate-300"></i>
+                <span class="text-[9px] font-black uppercase">Foto Máquina *</span>
+                <input type="file" name="foto_maquina" id="f1" capture="camera" accept="image/*" required class="hidden" onchange="mark('label_f1')">
+            </label>
+            <label id="label_f2" class="bg-white p-5 rounded-[30px] border-2 border-red-100 flex flex-col items-center gap-2">
+                <i class="fa-solid fa-store text-slate-300"></i>
+                <span class="text-[9px] font-black uppercase">Foto Fachada *</span>
+                <input type="file" name="foto_fachada" id="f2" capture="camera" accept="image/*" required class="hidden" onchange="mark('label_f2')">
+            </label>
+        </div>
 
-    <div class="grid grid-cols-2 gap-3">
-        <label id="label_f1" class="bg-white p-5 rounded-[30px] border-2 border-red-200 flex flex-col items-center gap-2">
-            <i class="fa-solid fa-camera text-slate-400"></i>
-            <span class="text-[9px] font-black uppercase text-slate-500">Foto Máquina *</span>
-            <input type="file" name="foto_maquina" id="f1" capture="camera" accept="image/*" required class="hidden" onchange="markDone('label_f1')">
-        </label>
-        <label id="label_f2" class="bg-white p-5 rounded-[30px] border-2 border-red-200 flex flex-col items-center gap-2">
-            <i class="fa-solid fa-store text-slate-400"></i>
-            <span class="text-[9px] font-black uppercase text-slate-500">Foto Fachada *</span>
-            <input type="file" name="foto_fachada" id="f2" capture="camera" accept="image/*" required class="hidden" onchange="markDone('label_f2')">
-        </label>
-    </div>
+        <input type="hidden" id="h_gps_real" name="gps_real">
+        <input type="hidden" id="h_dist" name="distancia_metros">
 
-    <textarea name="observacion" rows="2" class="w-full p-5 rounded-[30px] border border-slate-200 outline-none text-sm" placeholder="Observaciones opcionales..."></textarea>
-
-    <input type="hidden" id="h_gps_real" name="gps_real">
-    <input type="hidden" id="h_dist" name="distancia_metros">
-
-    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[30px] uppercase shadow-xl flex items-center justify-center gap-2">
-        <i class="fa-solid fa-lock"></i> Completar Datos para Enviar
-    </button>
-</form>
+        <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[30px] uppercase shadow-2xl transition-all">
+            <i class="fa-solid fa-lock mr-2"></i> Capturar para Enviar
+        </button>
+    </form>
+</div>
 
 <script>
     const maestro = {{ maestro_json | safe }};
@@ -63,31 +65,28 @@
         document.getElementById('h_gps_real').value = lat + ", " + lon;
     }, null, {enableHighAccuracy:true});
 
-    function markDone(id) {
-        const el = document.getElementById(id);
-        el.classList.replace('border-red-200', 'border-green-500');
-        el.querySelector('i').classList.replace('text-slate-400', 'text-green-500');
+    function mark(id) {
+        document.getElementById(id).classList.replace('border-red-100', 'border-green-500');
+        document.getElementById(id).querySelector('i').classList.replace('text-slate-300', 'text-green-500');
     }
 
     function sync(tipo) {
-        const val = (tipo === 'Poc') ? document.getElementById('i_poc').value : document.getElementById('i_bmb').value;
+        const val = document.getElementById(tipo === 'Poc' ? 'i_poc' : 'i_bmb').value;
         const item = maestro.find(x => tipo === 'Poc' ? x.Poc === val : x.BMB === val);
-        
         if(item && lat) {
             document.getElementById('i_poc').value = item.Poc;
             document.getElementById('i_bmb').value = item.BMB;
-            document.getElementById('i_poc').className = "w-full p-4 bg-slate-50 rounded-2xl border-2 border-green-500 outline-none";
-            document.getElementById('i_bmb').className = "w-full p-4 bg-slate-50 rounded-2xl border-2 border-green-500 outline-none";
-
             const [rLat, rLon] = item.Ubicacion_Ref.split(',').map(Number);
             const d = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2), Math.sqrt(1-(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2))));
             
             document.getElementById('dist_txt').innerText = d + " MTS AL PUNTO";
             document.getElementById('h_dist').value = d;
+            document.getElementById('status_box').className = "mt-6 p-4 rounded-2xl border-2 border-dashed border-green-500 bg-green-50 flex flex-col items-center justify-center";
+            document.getElementById('gps_icon').className = "fa-solid fa-circle-check text-green-600 mb-1";
             
-            const b = document.getElementById('btn');
-            b.disabled = false; b.classList.replace('bg-slate-300', 'bg-blue-900');
-            b.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Reporte Ahora';
+            const btn = document.getElementById('btn');
+            btn.disabled = false; btn.classList.replace('bg-slate-300', 'bg-blue-900');
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Enviar Reporte';
         }
     }
 </script>
