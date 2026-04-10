@@ -21,7 +21,7 @@ FUNCIONARIOS = sorted([
     "YEISON JOSE GONZALES BERRIO", "YOANA ANDREA HINCAPIE ZEA"
 ])
 
-# --- 2. MAESTRO DE PUNTOS ---
+# --- 2. MAESTRO DE PUNTOS (ESTILO TABLA) ---
 TABLA_PUNTOS = [
     ["COLEGIO LICEO DE COLOMBIA2","BMB: 17428","COLEGIO LICEO DE COLOMBIA ","4.795639, -74.0442872","Bogotá D.C.","Bogotá D.C."],
 ["Districan ","BMB: 12379","V2FC+WW5 Santa Rosa de Viterbo, Boyacá","5.8741303, -72.9828697","Santa Rosa de Viterbo","Boyacá"],
@@ -5566,7 +5566,7 @@ def guardar_registro(doc):
         coleccion = db['Visitas_a_POC']
         return coleccion.insert_one(doc)
 
-# --- 4. PLANTILLA HTML OPTIMIZADA PARA MÓVIL ---
+# --- 4. PLANTILLA HTML CON BUSCADORES ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -5577,14 +5577,15 @@ HTML_TEMPLATE = """
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .disabled-btn { background-color: #9ca3af !important; cursor: not-allowed; opacity: 0.6; }
-        input, select, textarea { font-size: 16px !important; } /* Evita zoom en iOS */
+        input, select, textarea { font-size: 16px !important; }
+        .input-field { @apply w-full bg-white border-2 border-slate-200 p-3 rounded-2xl shadow-sm focus:border-blue-500 outline-none transition-all; }
     </style>
 </head>
 <body class="bg-slate-50 antialiased text-slate-900">
     <div class="min-h-screen flex flex-col">
         <header class="bg-blue-900 text-white p-4 shadow-lg text-center sticky top-0 z-50">
             <h1 class="text-lg font-black uppercase tracking-widest">Power Trade</h1>
-            <p class="text-[10px] opacity-75">REGISTRO DE VISITA TÉCNICA</p>
+            <p class="text-[10px] opacity-75">BÚSQUEDA INTELIGENTE DE POC</p>
         </header>
 
         <main class="flex-grow p-4">
@@ -5592,39 +5593,40 @@ HTML_TEMPLATE = """
                 
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-500 uppercase ml-1">Funcionario</label>
-                    <select name="funcionario" class="w-full bg-white border-2 border-slate-200 p-3 rounded-2xl shadow-sm focus:border-blue-500 outline-none transition-all" required>
+                    <select name="funcionario" class="w-full bg-white border-2 border-slate-200 p-3 rounded-2xl shadow-sm outline-none" required>
                         <option value="">Seleccione...</option>
                         {% for f in funcionarios %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
                     </select>
                 </div>
 
                 <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-4">
                         <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-blue-800 uppercase ml-1">Poc</label>
-                            <select id="poc_sel" name="poc" onchange="sync('Poc')" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" required>
-                                <option value="">-- Buscar Punto --</option>
-                                {% for p in maestro %}<option value="{{ p.Poc }}">{{ p.Poc }}</option>{% endfor %}
-                            </select>
+                            <label class="text-[10px] font-bold text-blue-800 uppercase ml-1">Escriba Nombre del Poc</label>
+                            <input list="list_poc" id="poc_input" name="poc" oninput="sync('Poc')" placeholder="Buscar tienda..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" required>
+                            <datalist id="list_poc">
+                                {% for p in maestro %}<option value="{{ p.Poc }}">{% endfor %}
+                            </datalist>
                         </div>
+
                         <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-blue-800 uppercase ml-1">Código BMB</label>
-                            <select id="bmb_sel" name="bmb" onchange="sync('BMB')" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" required>
-                                <option value="">-- Buscar Código --</option>
-                                {% for p in maestro %}<option value="{{ p.BMB }}">{{ p.BMB }}</option>{% endfor %}
-                            </select>
+                            <label class="text-[10px] font-bold text-blue-800 uppercase ml-1">Escriba Código BMB</label>
+                            <input list="list_bmb" id="bmb_input" name="bmb" oninput="sync('BMB')" placeholder="Buscar código..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none" required>
+                            <datalist id="list_bmb">
+                                {% for p in maestro %}<option value="{{ p.BMB }}">{% endfor %}
+                            </datalist>
                         </div>
                     </div>
 
-                    <div id="gps_status_box" class="mt-2 p-3 bg-slate-100 rounded-2xl flex items-center justify-between border border-dashed border-slate-300">
+                    <div id="gps_status_box" class="p-3 bg-slate-100 rounded-2xl flex items-center justify-between border border-dashed border-slate-300">
                         <div class="flex flex-col">
                             <span class="text-[9px] font-black text-slate-400 uppercase">Validación GPS</span>
                             <span id="distancia_txt" class="text-xs font-bold text-slate-500 italic">Esperando señal...</span>
                         </div>
                         <div id="gps_indicator" class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
                     </div>
-                    <input type="hidden" id="gps_input" name="ubicacion_gps">
-                    <input type="hidden" id="distancia_val" name="distancia_metros">
+                    <input type="hidden" id="gps_hidden" name="ubicacion_gps">
+                    <input type="hidden" id="distancia_hidden" name="distancia_metros">
                 </div>
 
                 <div class="space-y-1">
@@ -5638,24 +5640,24 @@ HTML_TEMPLATE = """
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <label class="relative flex flex-col items-center justify-center p-4 bg-white border-2 border-dashed border-slate-300 rounded-3xl hover:bg-slate-50 transition-colors">
+                    <label class="relative flex flex-col items-center justify-center p-4 bg-white border-2 border-dashed border-slate-300 rounded-3xl active:bg-slate-100">
                         <span class="text-[10px] font-bold text-blue-900 uppercase">Máquina</span>
-                        <input type="file" name="foto_maquina" accept="image/*" capture="camera" required class="absolute inset-0 opacity-0 cursor-pointer">
-                        <span class="text-[9px] text-slate-400 mt-1">Tocar para Foto</span>
+                        <input type="file" name="foto_maquina" accept="image/*" capture="camera" required class="absolute inset-0 opacity-0">
+                        <span class="text-[9px] text-slate-400">Capturar Foto</span>
                     </label>
-                    <label class="relative flex flex-col items-center justify-center p-4 bg-white border-2 border-dashed border-slate-300 rounded-3xl hover:bg-slate-50 transition-colors">
+                    <label class="relative flex flex-col items-center justify-center p-4 bg-white border-2 border-dashed border-slate-300 rounded-3xl active:bg-slate-100">
                         <span class="text-[10px] font-bold text-blue-900 uppercase">Fachada</span>
-                        <input type="file" name="foto_fachada" accept="image/*" capture="camera" required class="absolute inset-0 opacity-0 cursor-pointer">
-                        <span class="text-[9px] text-slate-400 mt-1">Tocar para Foto</span>
+                        <input type="file" name="foto_fachada" accept="image/*" capture="camera" required class="absolute inset-0 opacity-0">
+                        <span class="text-[9px] text-slate-400">Capturar Foto</span>
                     </label>
                 </div>
 
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-500 uppercase ml-1">Observación</label>
-                    <textarea name="observacion" rows="3" class="w-full bg-white border-2 border-slate-200 p-3 rounded-2xl shadow-sm outline-none resize-none" placeholder="Detalles adicionales..."></textarea>
+                    <textarea name="observacion" rows="3" class="w-full bg-white border-2 border-slate-200 p-3 rounded-2xl shadow-sm outline-none resize-none" placeholder="Opcional..."></textarea>
                 </div>
 
-                <button type="submit" id="btn_submit" disabled class="disabled-btn w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-sm active:scale-95">
+                <button type="submit" id="btn_submit" disabled class="disabled-btn w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-xl uppercase tracking-widest text-sm active:scale-95 transition-all">
                     Finalizar Reporte
                 </button>
             </form>
@@ -5666,10 +5668,6 @@ HTML_TEMPLATE = """
         const maestro = {{ maestro_json | safe }};
         let uLat, uLon, gpsReady = false;
 
-        const btn = document.getElementById('btn_submit');
-        const txtDist = document.getElementById('distancia_txt');
-        const indicator = document.getElementById('gps_indicator');
-
         function calcDist(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2-lat1)*Math.PI/180;
@@ -5678,49 +5676,41 @@ HTML_TEMPLATE = """
             return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
-        function checkFormStatus() {
-            const poc = document.getElementById('poc_sel').value;
-            const dist = document.getElementById('distancia_val').value;
-            
-            if(gpsReady && poc !== "" && dist !== "") {
-                btn.disabled = false;
-                btn.classList.remove('disabled-btn');
-            } else {
-                btn.disabled = true;
-                btn.classList.add('disabled-btn');
-            }
-        }
-
         function sync(tipo) {
-            const pVal = document.getElementById('poc_sel').value;
-            const bVal = document.getElementById('bmb_sel').value;
+            const pVal = document.getElementById('poc_input').value;
+            const bVal = document.getElementById('bmb_input').value;
+            
+            // Buscar el item exacto
             const item = maestro.find(x => tipo === 'Poc' ? x.Poc === pVal : x.BMB === bVal);
 
             if(item) {
-                document.getElementById('poc_sel').value = item.Poc;
-                document.getElementById('bmb_sel').value = item.BMB;
+                document.getElementById('poc_input').value = item.Poc;
+                document.getElementById('bmb_input').value = item.BMB;
+                
                 if(uLat && uLon) {
                     const [rLat, rLon] = item.Ubicacion_Ref.split(',').map(Number);
                     const mts = calcDist(uLat, uLon, rLat, rLon);
+                    
+                    const txtDist = document.getElementById('distancia_txt');
                     txtDist.innerText = mts + " metros de distancia";
-                    document.getElementById('distancia_val').value = mts;
+                    document.getElementById('distancia_hidden').value = mts;
                     txtDist.className = mts > 150 ? "text-xs font-black text-red-600" : "text-xs font-black text-green-600";
-                    checkFormStatus();
+                    
+                    if(gpsReady) {
+                        const btn = document.getElementById('btn_submit');
+                        btn.disabled = false;
+                        btn.classList.remove('disabled-btn');
+                    }
                 }
             }
         }
 
         navigator.geolocation.watchPosition(p => {
-            uLat = p.coords.latitude; 
-            uLon = p.coords.longitude;
+            uLat = p.coords.latitude; uLon = p.coords.longitude;
             gpsReady = true;
-            document.getElementById('gps_input').value = uLat + "," + uLon;
-            indicator.classList.replace('bg-red-500', 'bg-green-500');
-            indicator.classList.remove('animate-pulse');
-            if(document.getElementById('poc_sel').value) sync('Poc');
-        }, err => {
-            txtDist.innerText = "Error: Activa el GPS";
-        }, { enableHighAccuracy: true });
+            document.getElementById('gps_hidden').value = uLat + "," + uLon;
+            document.getElementById('gps_indicator').className = "w-3 h-3 rounded-full bg-green-500";
+        }, null, { enableHighAccuracy: true });
     </script>
 </body>
 </html>
@@ -5748,27 +5738,22 @@ def guardar():
             "fecha": datetime.now().strftime("%Y-%m-%d")
         }
         guardar_registro(doc)
-        # Ventana de éxito tipo móvil
         return """
         <!DOCTYPE html>
         <html lang="es">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-slate-100 flex items-center justify-center min-h-screen p-6">
-            <div class="bg-white p-8 rounded-[40px] shadow-2xl text-center max-w-xs w-full border-t-8 border-green-500">
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script></head>
+        <body class="bg-slate-100 flex items-center justify-center min-h-screen p-6 text-center">
+            <div class="bg-white p-8 rounded-[40px] shadow-2xl max-w-xs border-t-8 border-green-500">
                 <div class="text-green-500 text-6xl mb-4">✔</div>
-                <h1 class="text-2xl font-black text-slate-800 mb-2 italic">¡LISTO!</h1>
-                <p class="text-slate-500 text-sm mb-6">El reporte ha sido guardado exitosamente.</p>
-                <a href="/" class="block w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg uppercase tracking-tighter">Nueva Visita</a>
+                <h1 class="text-2xl font-black text-slate-800 italic uppercase">¡Reporte Enviado!</h1>
+                <p class="text-slate-500 text-sm my-4">Se ha validado la distancia y almacenado en MongoDB.</p>
+                <a href="/" class="block bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg uppercase">Nueva Visita</a>
             </div>
         </body>
         </html>
         """
     except Exception as e:
-        return f"<h1>Error: {e}</h1>"
+        return f"Error: {e}"
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
