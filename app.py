@@ -32,12 +32,24 @@ CONFIG_FORMULARIOS = {
             {"id": "Sector", "label": "Sector", "type": "select", "options": ["Educacion", "Cafeteria", "Panaderia","Restaurante","Salud","Transporte","Tinteros"], "required": True},
             {"id": "Interesado en?", "label": "Interesado en?", "type": "select", "options": ["Maquina", "Food", "Ambos","No esta interesado"], "required": True},
             {"id": "productos", "label": "Productos", "type": "multiselect", "options": 
-             ["Nescafe Alegria Cappuccino 4 X 1 Kgco", 
+             ["Maquina",
+              "Nescafe Alegria Cappuccino 4 X 1 Kgco", 
               "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
+              "Nescafe Alegria Cappuccino 4 X 1 Kgco",
+                "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
+                "Nescafe Alegria Cappu Vainillanp 4 X 1Kgco",
+                "Abuelita Chocolate Venta 6 X 750G Mx ",
+                "Nescafe Cafe En Grano Npro 6 X 1Kg Co",
+                "Nestle Cobertura De Cacao Leche 2 X 5Kg Co",
+                "Nestle Cobertura Cac Semiamarga 2 X 5Kg Co",
+                "La Lechera Leche Condensada 4 X 4.5Kg Co",
+                "La Lechera Npro Leche Condensada6 X 800Gco",
+                "Nescafe Dolca Npro 11 X 1Kg Co",
+
               "Milo Granulado", "Leche Nestlé"], "required": True},
             
-            {"id": "Venta Efectiva", "label": "Venta Efectiva", "type": "multiselect", "options": ["Si", "No"], "required": False},
-            {"id": "Seguimiento", "label": "Seguimiento", "type": "multiselect", "options": ["Si", "No"], "required": False},
+            {"id": "Venta Efectiva", "label": "Venta Efectiva", "type": "select", "options": ["Si", "No"], "required": False},
+            {"id": "Seguimiento", "label": "Seguimiento", "type": "select", "options": ["Si", "No"], "required": False},
             {"id": "observaciones", "label": "Notas", "type": "textarea", "required": False}
         ]
     },
