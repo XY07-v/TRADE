@@ -5549,7 +5549,7 @@ TABLA_PUNTOS = [
 ["PANADERIA PAN Y CANELA SEDE SAMAN","BMB: 12489","Cll 11 No 33 - 25 Brr Saman Acacias","3.9853594, -73.7757161","Acacias","Meta"],
 ["BUÑUELOS LA OCASION","BMB: 7852","Av 23 No 29 A - 50","3.999155, -73.768193","Acacias","Meta"],
 ["ADMINISTRATIVO","Administrativo","Manpower calle 100","4.6858303, -74.055595","Bogotá D.C.","Bogotá D.C."],
-["PUNTO PILOTO","Punto de prueba","Manpower Calle 100","4.6858303, -74.055595","Bogotá D.C.","Bogotá D.C."]
+["PUNTO PILOTO","Punto de prueba","Manpower Calle 100","4.6858303, -74.055595","Bogotá D.C.","Bogotá D.C."]]
 
 # Conversión automática a diccionario eficiente
 DATOS_MAESTROS = [
