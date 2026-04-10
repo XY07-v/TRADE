@@ -65,19 +65,19 @@ CONFIG_FORMULARIOS = {
         "titulo": "Food Service", "icono": "fa-utensils",
         "preguntas": [
             {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
-            {"id": "producto_1", "label": "Productos", "type": "multiselect", "options": 
+            {"id": "producto_1", "label": "Productos_1", "type": "multiselect", "options": 
              ["Aro - Caldo Desmenuzado 800 Grs",
-"Aro - Caldo gallina 1 Kg",
-"Aro - Base bechamel Aro x 1 Kg",
-"Aro - Leche condesada Aro x 1.3 Kg",
-"Aro - Leche condesada Aro x 3.9 Kg",
-"Aro - Leche condesada Aro x 5 Kg",
-"Bugueña - Leche condensada la bugueña x 1 Kg",
-"Bugueña - Leche condensada la bugueña x 5 Kg",
-"Carreta - Leche condensada la Carreta x 1 Kg",
-"Carreta - Leche condensada la Carreta x 5 Kg"], "required": True},
+                "Aro - Caldo gallina 1 Kg",
+                "Aro - Base bechamel Aro x 1 Kg",
+                "Aro - Leche condesada Aro x 1.3 Kg",
+                "Aro - Leche condesada Aro x 3.9 Kg",
+                "Aro - Leche condesada Aro x 5 Kg",
+                "Bugueña - Leche condensada la bugueña x 1 Kg",
+                "Bugueña - Leche condensada la bugueña x 5 Kg",
+                "Carreta - Leche condensada la Carreta x 1 Kg",
+                "Carreta - Leche condensada la Carreta x 5 Kg"], "required": True},
             
-            {"id": "Precio_1", "label": "Categoría",  "type": "text", "required": True},
+            {"id": "Precio_1", "label": "Precio_1",  "type": "text", "required": True},
         ]
     },
     "competencias": {
