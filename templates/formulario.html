@@ -1,46 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
 <form action="/guardar" method="POST" enctype="multipart/form-data" class="space-y-4">
-    <div class="bg-white p-5 rounded-[30px] shadow-sm border">
-        <label class="text-[10px] font-black text-slate-400 uppercase">Funcionario</label>
-        <select name="funcionario" class="w-full p-3 bg-slate-50 rounded-xl mb-4 outline-none" required>
+    <div class="bg-white p-6 rounded-[35px] shadow-xl border border-slate-100">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-user-tie text-blue-900"></i>
+            <label class="text-[10px] font-black text-slate-400 uppercase">Funcionario Responsable</label>
+        </div>
+        <select name="funcionario" class="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none text-sm font-semibold" required>
             <option value="">Seleccione...</option>
             {% for f in funcionarios %}<option value="{{f}}">{{f}}</option>{% endfor %}
         </select>
 
-        <label class="text-[10px] font-black text-blue-900 uppercase">Punto de Venta</label>
-        <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-3 bg-slate-50 rounded-xl mb-2" placeholder="Nombre POC..." required>
-        <datalist id="l_poc">{% for p in maestro %}<option value="{{p.Poc}}">{% endfor %}</datalist>
-        
-        <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-3 bg-slate-50 rounded-xl" placeholder="Código BMB..." required>
-        <datalist id="l_bmb">{% for p in maestro %}<option value="{{p.BMB}}">{% endfor %}</datalist>
+        <hr class="my-6 opacity-50">
 
-        <div class="mt-4 p-3 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 text-center">
-            <span id="dist_txt" class="text-xs font-black text-slate-400 italic tracking-tighter">SIN GPS</span>
+        <div class="space-y-4">
+            <div class="relative">
+                <i class="fa-solid fa-shop absolute left-4 top-4 text-blue-900 opacity-50"></i>
+                <input list="l_poc" id="i_poc" name="poc" oninput="sync('Poc')" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl border-none text-sm font-bold" placeholder="Nombre del Punto..." required>
+                <datalist id="l_poc">{% for p in maestro %}<option value="{{p.Poc}}">{% endfor %}</datalist>
+            </div>
+            
+            <div class="relative">
+                <i class="fa-solid fa-barcode absolute left-4 top-4 text-blue-900 opacity-50"></i>
+                <input list="l_bmb" id="i_bmb" name="bmb" oninput="sync('BMB')" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl border-none text-sm font-bold" placeholder="Código BMB..." required>
+                <datalist id="l_bmb">{% for p in maestro %}<option value="{{p.BMB}}">{% endfor %}</datalist>
+            </div>
+        </div>
+
+        <div id="status_box" class="mt-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center transition-all">
+            <i id="gps_icon" class="fa-solid fa-location-crosshairs text-slate-300 animate-pulse mb-1"></i>
+            <span id="dist_txt" class="text-[10px] font-black text-slate-400 uppercase">Esperando GPS...</span>
         </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-        <label class="bg-white p-4 rounded-3xl border text-center relative active:bg-slate-100">
-            <span class="text-[10px] font-bold uppercase">Máquina</span>
-            <input type="file" name="foto_maquina" capture="camera" accept="image/*" required class="absolute inset-0 opacity-0">
+        <label class="bg-white p-5 rounded-[30px] border border-slate-200 flex flex-col items-center gap-2 active:scale-95 transition-all">
+            <i class="fa-solid fa-camera text-blue-900"></i>
+            <span class="text-[9px] font-black uppercase text-slate-500">Foto Máquina</span>
+            <input type="file" name="foto_maquina" capture="camera" accept="image/*" required class="hidden">
         </label>
-        <label class="bg-white p-4 rounded-3xl border text-center relative active:bg-slate-100">
-            <span class="text-[10px] font-bold uppercase">Fachada</span>
-            <input type="file" name="foto_fachada" capture="camera" accept="image/*" required class="absolute inset-0 opacity-0">
+        <label class="bg-white p-5 rounded-[30px] border border-slate-200 flex flex-col items-center gap-2 active:scale-95 transition-all">
+            <i class="fa-solid fa-store text-blue-900"></i>
+            <span class="text-[9px] font-black uppercase text-slate-500">Foto Fachada</span>
+            <input type="file" name="foto_fachada" capture="camera" accept="image/*" required class="hidden">
         </label>
     </div>
 
-    <select name="motivo" class="w-full p-4 bg-white rounded-2xl border shadow-sm outline-none" required>
-        <option value="Ruta">Visita Ruta</option>
-        <option value="Novedad">Novedad</option>
-    </select>
+    <textarea name="observacion" rows="2" class="w-full p-5 rounded-[30px] border border-slate-200 outline-none text-sm" placeholder="Añadir nota adicional (opcional)..."></textarea>
 
-    <textarea name="observacion" rows="2" class="w-full p-4 rounded-2xl border outline-none resize-none" placeholder="Observaciones..."></textarea>
+    <input type="hidden" id="h_gps_real" name="gps_real">
     <input type="hidden" id="h_dist" name="distancia_metros">
+    <input type="hidden" name="motivo" value="Visita de Ruta">
 
-    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[25px] uppercase shadow-lg transition-all">
-        Guardar Reporte
+    <button type="submit" id="btn" disabled class="w-full bg-slate-300 text-white font-black py-5 rounded-[30px] uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-2">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        Finalizar Reporte
     </button>
 </form>
 
@@ -50,6 +64,7 @@
 
     navigator.geolocation.watchPosition(p => {
         lat = p.coords.latitude; lon = p.coords.longitude;
+        document.getElementById('h_gps_real').value = lat + ", " + lon; // CAPTURA REAL
         if(document.getElementById('i_poc').value) sync('Poc');
     }, null, {enableHighAccuracy:true});
 
@@ -64,9 +79,21 @@
             const d = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2), Math.sqrt(1-(Math.sin(((rLat-lat)*Math.PI/180)/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(rLat*Math.PI/180)*Math.sin(((rLon-lon)*Math.PI/180)/2)**2))));
             
             const t = document.getElementById('dist_txt');
-            t.innerText = d + " MTS AL PUNTO";
-            t.className = d > 150 ? "text-xs font-black text-red-600" : "text-xs font-black text-green-600";
+            const box = document.getElementById('status_box');
+            const icon = document.getElementById('gps_icon');
+            
+            t.innerText = d + " METROS DE DISTANCIA";
             document.getElementById('h_dist').value = d;
+            
+            if(d > 150) {
+                box.className = "mt-6 p-4 rounded-2xl border-2 border-dashed border-red-200 bg-red-50 flex flex-col items-center justify-center";
+                t.className = "text-[10px] font-black text-red-600 uppercase";
+                icon.className = "fa-solid fa-circle-exclamation text-red-600";
+            } else {
+                box.className = "mt-6 p-4 rounded-2xl border-2 border-dashed border-green-200 bg-green-50 flex flex-col items-center justify-center";
+                t.className = "text-[10px] font-black text-green-600 uppercase";
+                icon.className = "fa-solid fa-circle-check text-green-600";
+            }
             
             const b = document.getElementById('btn');
             b.disabled = false; b.classList.replace('bg-slate-300', 'bg-blue-900');
