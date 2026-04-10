@@ -4,10 +4,11 @@ import gridfs
 import pytz
 import pandas as pd
 from io import BytesIO
-from flask import Flask, render_template, request, redirect, url_for, Response, send_file
+from flask import Flask, render_template, request, redirect, url_for, Response, send_file, session # Agregado session
 from pymongo import MongoClient
 from datetime import datetime
 from bson import ObjectId
+from functools import wraps # Agregado wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "power_trade_ultra_2026")
@@ -26,8 +27,37 @@ USUARIOS_PERMITIDOS = {
     "gerente": "trade789"
 }
 
-from flask import session # Asegúrate de importar session de flask
+# --- EL PROTECTOR (DECORADOR) ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'usuario_logueado' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
+# --- RUTAS DE GESTIÓN DE ACCESO ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        user = request.form.get('username')
+        pw = request.form.get('password')
+        # Cambiado a USUARIOS_PERMITIDOS para coincidir con tu diccionario
+        if user in USUARIOS_PERMITIDOS and USUARIOS_PERMITIDOS[user] == pw:
+            session['usuario_logueado'] = user
+            return redirect(url_for('index'))
+        else:
+            error = "Credenciales incorrectas. Intente de nuevo."
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('usuario_logueado', None)
+    return redirect(url_for('login'))
+
+# --- CONFIGURACIÓN DE FORMULARIOS DINÁMICOS (TUS DATOS SIN CAMBIOS) ---
 # --- CONFIGURACIÓN DE FORMULARIOS DINÁMICOS ---
 CONFIG_FORMULARIOS = {
     "prospecciones": {
@@ -900,20 +930,22 @@ DATOS_MAESTROS = [{"Poc": f[0], "BMB": f[1], "Ubicacion_Ref": f[2]} for f in TAB
 def get_colombia_time():
     return datetime.now(pytz.timezone('America/Bogota'))
 
-# --- RUTAS ---
+# --- RUTAS PROTEGIDAS (Agregado @login_required) ---
 
 @app.route('/')
+@login_required # <--- Agregado
 def index():
     return render_template('formulario.html', funcionarios=FUNCIONARIOS, maestro=DATOS_MAESTROS, maestro_json=json.dumps(DATOS_MAESTROS))
 
 @app.route('/form/<tipo>')
+@login_required # <--- Agregado
 def render_form_dinamico(tipo):
     if tipo not in CONFIG_FORMULARIOS: return "Error", 404
     config = CONFIG_FORMULARIOS[tipo]
     return render_template('prospecciones.html', funcionarios=FUNCIONARIOS, preguntas=config['preguntas'], titulo=config['titulo'], icono=config['icono'], tipo_url=tipo)
 
-
 @app.route('/guardar_dinamico/<tipo>', methods=['POST'])
+@login_required # <--- Agregado
 def guardar_dinamico(tipo):
     ahora = get_colombia_time()
     datos_raw = request.form.to_dict(flat=False)
@@ -923,6 +955,7 @@ def guardar_dinamico(tipo):
     return redirect(url_for('render_form_dinamico', tipo=tipo))
 
 @app.route('/guardar_visita', methods=['POST'])
+@login_required # <--- Agregado
 def guardar_visita():
     try:
         f1 = fs.put(request.files['foto_maquina'], filename="maquina.jpg")
@@ -945,6 +978,7 @@ def guardar_visita():
     except Exception as e: return f"Error: {e}", 500
 
 @app.route('/registros')
+@login_required # <--- Agregado
 def ver_registros():
     f_inicio = request.args.get('f_inicio', get_colombia_time().strftime("%Y-%m-%d"))
     f_fin = request.args.get('f_fin', get_colombia_time().strftime("%Y-%m-%d"))
@@ -956,6 +990,7 @@ def ver_registros():
     return render_template('registros.html', registros=registros, f_inicio=f_inicio, f_fin=f_fin, busqueda=busqueda)
 
 @app.route('/descargar_excel')
+@login_required # <--- Agregado
 def descargar_excel():
     f_inicio = request.args.get('f_inicio')
     f_fin = request.args.get('f_fin')
@@ -972,43 +1007,10 @@ def descargar_excel():
     return send_file(output, as_attachment=True, download_name=f"PowerTrade_{f_inicio}.xlsx")
 
 @app.route('/foto/<foto_id>')
+@login_required # <--- Agregado
 def servir_foto(foto_id):
     archivo = fs.get(ObjectId(foto_id))
     return Response(archivo.read(), mimetype='image/jpeg')
-
-# --- 2. EL PROTECTOR (DECORADOR) ---
-# Esta función protege tus rutas actuales sin cambiar su lógica interna#______________________________________________________
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'usuario_logueado' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# --- 3. RUTAS DE GESTIÓN DE ACCESO ---
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        user = request.form.get('username')
-        pw = request.form.get('password')
-        
-        # Validación contra el diccionario
-        if user in USUARIOS_ACCESO and USUARIOS_ACCESO[user] == pw:
-            session['usuario_logueado'] = user
-            # Redirige a la página principal después de entrar
-            return redirect(url_for('index'))
-        else:
-            error = "Credenciales incorrectas. Intente de nuevo."
-            
-    return render_template('login.html', error=error)
-
-@app.route('/logout')
-def logout():
-    session.pop('usuario_logueado', None)
-    return redirect(url_for('login'))#______________________________________________________
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
