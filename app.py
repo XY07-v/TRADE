@@ -541,7 +541,7 @@ CONFIG_FORMULARIOS = {
             {"id": "negocio", "label": "Nombre del Establecimiento", "type": "text", "required": True},
             {"id": "direccion", "label": "Dirección", "type": "text", "required": True},
             {"id": "Tipo de cliente", "label": "Tipo de cliente", "type": "select", "options": ["Distribuidor", "Mayorista", "Cuentas claves","Cash & Carrier","Cafetera","Otro"], "required": True},
-            {"id": "producto1", "label": "producto1", "type": "multiselect", "options": 
+            {"id": "producto1", "label": "producto1", "type": "select", "options": 
              ["Aguila Roja - Aguila x 400 Grs",
 "Aguila Roja - Aguila x 500 Grs",
 "Aguila Roja - Aguila x 1 Kg",
@@ -610,7 +610,7 @@ CONFIG_FORMULARIOS = {
 "Colombina - Nucita x 1 Kg",
 "Milo Barato"], "required": True},
             {"id": "Precio1", "label": "Precio1", "type": "text", "required": True},
-            {"id": "producto2", "label": "producto2", "type": "multiselect", "options": 
+            {"id": "producto2", "label": "producto2", "type": "select", "options": 
              ["Aguila Roja - Aguila x 400 Grs",
 "Aguila Roja - Aguila x 500 Grs",
 "Aguila Roja - Aguila x 1 Kg",
@@ -679,7 +679,7 @@ CONFIG_FORMULARIOS = {
 "Colombina - Nucita x 1 Kg",
 "Milo Barato"], "required": True},
             {"id": "Precio2", "label": "Precio2", "type": "text", "required": True},
-            {"id": "producto3", "label": "producto3", "type": "multiselect", "options": 
+            {"id": "producto3", "label": "producto3", "type": "select", "options": 
              ["Aguila Roja - Aguila x 400 Grs",
 "Aguila Roja - Aguila x 500 Grs",
 "Aguila Roja - Aguila x 1 Kg",
