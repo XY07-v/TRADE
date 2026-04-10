@@ -8,22 +8,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .main-container { max-width: 1200px; margin: 0 auto; }
-        .nav-link { transition: all 0.3s; cursor: pointer; }
+        .nav-link { transition: all 0.3s; }
         .nav-link:hover { color: #93c5fd; }
+        ::-webkit-scrollbar { height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 flex flex-col min-h-screen">
+<body class="bg-slate-100 flex flex-col min-h-screen">
     <header class="bg-blue-900 text-white p-4 shadow-xl sticky top-0 z-50">
         <div class="main-container flex justify-between items-center">
             <h1 class="font-black italic uppercase text-xl">Power Trade</h1>
-            <nav class="hidden lg:flex gap-6 text-[10px] font-black uppercase">
+            <nav class="hidden lg:flex gap-4 text-[10px] font-black uppercase">
                 <a href="/" class="nav-link">Visitas</a>
                 <a href="/form/prospecciones" class="nav-link">Prospectos</a>
                 <a href="/form/leads" class="nav-link">Leads</a>
                 <a href="/form/food" class="nav-link">Food</a>
-                <a href="/form/competencias" class="nav-link">Competencia</a>
+                <a href="/form/competencias" class="nav-link">Competencias</a>
                 <a href="/form/ingredientes" class="nav-link">Insumos</a>
-                <a href="/registros" class="nav-link text-yellow-400 font-bold border-l pl-4">Historial</a>
+                <a href="/registros" class="nav-link text-yellow-400 border-l pl-4">Historial</a>
             </nav>
         </div>
     </header>
@@ -32,15 +34,14 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="fixed bottom-16 left-0 right-0 bg-white/90 backdrop-blur-md text-[8px] text-slate-400 text-center py-2 border-t font-black uppercase z-40">
+    <footer class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md text-[8px] text-slate-400 text-center py-2 border-t font-black uppercase z-40">
         Desarrollado por Andres Vanegas
     </footer>
 
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex items-center h-16 z-50 overflow-x-auto px-4 gap-6 shadow-2xl">
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex items-center h-16 z-50 overflow-x-auto px-4 gap-6">
         <a href="/" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-house"></i><span class="text-[7px] font-bold">VISITA</span></a>
         <a href="/form/prospecciones" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-magnifying-glass"></i><span class="text-[7px] font-bold">PROSP</span></a>
         <a href="/form/leads" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-user-tie"></i><span class="text-[7px] font-bold">LEADS</span></a>
-        <a href="/form/food" class="flex flex-col items-center text-slate-400 min-w-[50px]"><i class="fa-solid fa-utensils"></i><span class="text-[7px] font-bold">FOOD</span></a>
         <a href="/registros" class="flex flex-col items-center text-blue-900 min-w-[50px]"><i class="fa-solid fa-clock-history"></i><span class="text-[7px] font-bold">HIST</span></a>
     </nav>
 </body>
